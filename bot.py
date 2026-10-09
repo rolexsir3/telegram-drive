@@ -2,7 +2,11 @@
 Env: BOT_TOKEN, OWNER_ID (your numeric Telegram id), CHANNEL_ID. The bot must be an admin of the channel with 'Post messages'.
 Commands: /folder name (create + switch), /home, /where, /split on|off, /help
 """
-import os, json, time, requests
+import os, json, time, socket, queue, threading, requests
+import urllib3.util.connection as _uc
+
+_uc.allowed_gai_family = lambda: socket.AF_INET   # IPv4 only: avoids slow or broken IPv6 routes
+http = requests.Session()                          # reuse the connection instead of a new TLS handshake per call
 
 TOKEN = os.environ["BOT_TOKEN"]
 OWNER = int(os.environ["OWNER_ID"])
@@ -19,10 +23,14 @@ def save():
 
 def call(method, **p):
     while True:
-        r = requests.post(API + method, json=p, timeout=70).json()
+        t = time.time()
+        r = http.post(API + method, json=p, timeout=70).json()
+        if time.time() - t > 2 and method != "getUpdates":
+            print(f"slow {method}: {time.time() - t:.1f}s", flush=True)
         if r.get("ok"):
             return r["result"]
         if r.get("error_code") == 429:
+            print(f"rate limited, waiting {r['parameters']['retry_after']}s", flush=True)
             time.sleep(r["parameters"]["retry_after"] + 1)
             continue
         raise RuntimeError(r.get("description", r))
@@ -63,8 +71,37 @@ HELP = ("Send photos, videos or albums and I store them in your drive.\n\n"
         "/setfolder name - switch to an existing folder\n"
         "/folders - pick from folders I know\n"
         "/home - go back to the top level\n/where - show current folder\n"
+        "/quiet on|off - skip the saving/summary replies\n"
         "/split on|off - keep Photos and Videos in separate subfolders\n\n"
         "Tip: send as File to keep original photo quality.")
+
+
+q = queue.Queue()
+stat = {"ok": 0, "bad": 0, "chat": None, "dests": set()}
+
+
+def worker():
+    """Copies files into the channel in the background so commands are never blocked by Telegram's rate limits."""
+    while True:
+        try:
+            chat, mid, dest = q.get(timeout=3)
+        except queue.Empty:
+            if (stat["ok"] or stat["bad"]) and not st.get("quiet"):
+                where = ", ".join(sorted(stat["dests"]))
+                try:
+                    say(stat["chat"], f"Saved {stat['ok']} file(s) to {where}" + (f" ({stat['bad']} failed)" if stat["bad"] else ""))
+                except Exception as e:
+                    print("summary failed:", e, flush=True)
+            stat.update(ok=0, bad=0, dests=set())
+            continue
+        stat["chat"] = chat
+        stat["dests"].add(dest or "Home")
+        try:
+            call("copyMessage", chat_id=CHANNEL, from_chat_id=chat, message_id=mid, caption=f"📁 {dest}".strip())
+            stat["ok"] += 1
+        except Exception as e:
+            stat["bad"] += 1
+            print("copy failed:", e, flush=True)
 
 
 def handle(m):
@@ -93,22 +130,20 @@ def handle(m):
         elif cmd == "/split":
             st["split"] = arg.lower() != "off"; save()
             say(chat, "Photos and Videos go to separate subfolders." if st["split"] else "Everything goes straight into the folder.")
-        elif cmd == "/where": say(chat, f"Folder: {st['folder'] or 'Home'}\nSplit photos/videos: {'on' if st['split'] else 'off'}")
+        elif cmd == "/quiet":
+            st["quiet"] = arg.lower() != "off"; save()
+            say(chat, "Quiet mode on: I only reply on errors." if st["quiet"] else "Quiet mode off.")
+        elif cmd == "/where": say(chat, f"Folder: {st['folder'] or 'Home'}\nSplit photos/videos: {'on' if st['split'] else 'off'}\nQueued: {q.qsize()}")
         else: say(chat, HELP)
         return
     if not any(k in m for k in ("photo", "video", "document", "animation", "video_note")):
         return
     dest = target(kind_of(m))
-    call("copyMessage", chat_id=CHANNEL, from_chat_id=chat, message_id=m["message_id"], caption=f"📁 {dest}".strip())
-    g = m.get("media_group_id")
-    if g:
-        if g in groups: return
-        groups.append(g); del groups[:-50]
-        say(chat, f"Saving album to {dest or 'Home'}")
-    else:
-        say(chat, f"Saved to {dest or 'Home'}")
+    if q.empty() and not st.get("quiet"):
+        say(chat, "Got it, saving…")
+    q.put((chat, m["message_id"], dest))
 
-
+threading.Thread(target=worker, daemon=True).start()
 offset = None
 print("bot running")
 while True:
