@@ -1,121 +1,206 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en" data-theme="auto"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Channel Drive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e9eef3;--panel:#fff;--ink:#10202f;--mut:#64748b;--acc:#1f7ae0;--line:#d5dde6}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1620;--panel:#16212d;--ink:#e6edf4;--mut:#8ea0b3;--acc:#4a9cf0;--line:#25323f}}
-*{box-sizing:border-box}
-body{margin:0;height:100vh;display:grid;grid-template-columns:230px 1fr;font:15px/1.4 ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-aside{background:var(--panel);border-right:1px solid var(--line);padding:14px 8px;overflow:auto}
-aside h1{font-size:17px;margin:0 8px 12px}
-aside a{display:block;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--ink)}
-aside a:hover{background:var(--bg)} aside a.on{background:var(--acc);color:#fff}
-main{display:flex;flex-direction:column;min-width:0}
-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
-.crumbs{flex:1;min-width:140px;font-weight:600}.crumbs a{cursor:pointer;color:var(--mut)}.crumbs a:last-child{color:var(--ink)}
-button,.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer}
-button.pri,.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
-button.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-.seg{display:flex;gap:4px}
-#q{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);min-width:180px}
-#st{padding:0 16px;color:var(--mut);min-height:20px;font-size:13px}
-#grid{flex:1;overflow:auto;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;align-content:start}
-#grid.drag{outline:2px dashed var(--acc);outline-offset:-8px}
-.tile{position:relative;aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer}
-.tile img{width:100%;height:100%;object-fit:cover;display:block}
-.tile.folder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:34px}
-.tile.folder span{font-size:14px;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ph{padding:12px;color:var(--mut);word-break:break-all;font-size:13px}
-.play{position:absolute;top:8px;left:8px;background:#000a;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px}
-.bar{position:absolute;inset:auto 0 0 0;display:none;gap:4px;align-items:center;padding:6px;background:#000b;color:#fff;font-size:12px}
-.bar span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar button{padding:2px 6px;font-size:12px}
-.tile:hover .bar,.tile:focus-within .bar{display:flex}
-.empty{grid-column:1/-1;color:var(--mut);padding:40px 0;text-align:center}
-#lb{position:fixed;inset:0;background:#000e;display:flex;align-items:center;justify-content:center;z-index:9}
-#lb[hidden]{display:none}
-#lbc img,#lbc video{max-width:94vw;max-height:90vh}
-#lb button{position:absolute;background:#fff2;color:#fff;border:0;font-size:22px}
-@media(max-width:700px){body{grid-template-columns:1fr}aside{display:none}}
+:root{--bg:#eef1fb;--g1:#c9d8ff99;--g2:#e3d3ff99;--panel:rgba(255,255,255,.72);--solid:#fff;--ink:#1b2140;--mut:#6b7494;--line:rgba(27,33,64,.09);--a1:#5b8def;--a2:#8b5cf6;--grad:linear-gradient(135deg,var(--a1),var(--a2));--sh:0 1px 2px rgba(27,33,64,.06),0 10px 26px -10px rgba(27,33,64,.14);--r:16px}
+:root[data-theme=dark]{--bg:#0a0e1d;--g1:#3b52b855;--g2:#6d3fc455;--panel:rgba(255,255,255,.05);--solid:#151a30;--ink:#e9ecfa;--mut:#8f98ba;--line:rgba(255,255,255,.1);--sh:0 1px 2px #0006,0 12px 28px -12px #000b}
+@media(prefers-color-scheme:dark){:root[data-theme=auto]{--bg:#0a0e1d;--g1:#3b52b855;--g2:#6d3fc455;--panel:rgba(255,255,255,.05);--solid:#151a30;--ink:#e9ecfa;--mut:#8f98ba;--line:rgba(255,255,255,.1);--sh:0 1px 2px #0006,0 12px 28px -12px #000b}}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+[hidden]{display:none!important}
+body{margin:0;height:100vh;display:grid;grid-template-columns:250px 1fr;font:15px/1.45 'Manrope',ui-sans-serif,system-ui,sans-serif;color:var(--ink);background:radial-gradient(900px 520px at 6% -8%,var(--g1),transparent 62%),radial-gradient(800px 520px at 100% 0,var(--g2),transparent 62%),var(--bg)}
+aside{display:flex;flex-direction:column;background:var(--panel);backdrop-filter:blur(16px);border-right:1px solid var(--line);padding:18px 12px;min-height:0}
+aside h1{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-.02em;margin:2px 8px 18px}
+.logo{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--grad);color:#fff;font-size:17px;box-shadow:0 8px 18px -6px var(--a2)}
+#tree{flex:1;overflow:auto}
+aside a{display:block;padding:8px 12px;margin-bottom:2px;border-radius:12px;cursor:pointer;color:var(--ink);font-weight:600;transition:.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+aside a::before{content:"";display:inline-block;width:10px;height:10px;border-radius:4px;background:var(--fc,#8b5cf6);margin-right:9px}
+aside a[data-go=""]::before{content:"🏠";background:none;width:auto;height:auto;border-radius:0}
+aside a:hover,.dt{background:var(--line)}
+aside a.on{background:var(--grad);color:#fff;box-shadow:0 8px 18px -8px var(--a2)}
+aside a.on::before{background:#fff}
+#sum{margin-top:10px;padding:12px;border-radius:14px;background:var(--line);font-size:13px;font-weight:600;color:var(--mut);line-height:1.6}
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 20px 0;padding:10px 14px;background:var(--panel);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.brk{flex-basis:100%;height:0}
+.crumbs{flex:1;min-width:140px;font-weight:700}.crumbs a{cursor:pointer;color:var(--mut)}.crumbs a:last-child{color:var(--ink)}
+button,.btn,select{font:inherit;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--solid);color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+button:hover,.btn:hover{transform:translateY(-1px);box-shadow:var(--sh)}
+button.pri,.btn.pri{background:var(--grad);border:0;color:#fff;box-shadow:0 8px 18px -8px var(--a2)}
+#delf{color:#e5484d}
+.seg{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--line)}
+.seg button{border:0;background:transparent;padding:5px 13px}.seg button:hover{box-shadow:none;transform:none}
+.seg button.on{background:var(--solid);box-shadow:var(--sh)}
+#q{font:inherit;font-size:14px;padding:8px 14px 8px 36px;min-width:220px;color:var(--ink);border:1px solid var(--line);border-radius:999px;outline:0;background:var(--solid) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236b7494' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 3.5 3.5'/%3E%3C/svg%3E") no-repeat 13px center}
+#q:focus{border-color:var(--a1);box-shadow:0 0 0 4px rgba(91,141,239,.18)}
+input[type=range]{width:100px;accent-color:var(--a2)}input[type=checkbox]{accent-color:var(--a2)}
+.o{font-size:13px;color:var(--mut);display:flex;gap:6px;align-items:center}
+#fcol i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;cursor:pointer;margin-right:5px;font-size:11px;font-style:normal;color:var(--mut);border:1px solid var(--line)}
+#grid{flex:1;overflow:auto;padding:6px 20px 90px;margin-top:8px}
+#grid.drag{outline:2px dashed var(--a1);outline-offset:-10px;border-radius:var(--r)}
+.gh{margin:22px 4px 10px;font-size:14px;font-weight:800;color:var(--mut);letter-spacing:.02em}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px}.row::after{content:"";flex-grow:1e5}
+.row .tile{height:var(--h);flex:var(--r) 1 calc(var(--r)*var(--h))}
+.tile{position:relative;background:var(--solid);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;box-shadow:var(--sh);transition:transform .2s,box-shadow .2s;animation:rise .35s both}
+.tile.sk{background:linear-gradient(100deg,var(--line) 30%,transparent 50%,var(--line) 70%) 0 0/200% 100%,var(--solid);animation:rise .35s both,sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.tile:hover{transform:translateY(-3px);box-shadow:0 20px 38px -14px rgba(80,60,200,.4)}
+.tile img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .4s,transform .4s}
+.tile img.in{opacity:1}.tile:hover img{transform:scale(1.05)}.tile.sel img{transform:scale(.93);border-radius:12px}
+.tile.sel{outline:3px solid var(--a1);outline-offset:-3px}
+.tile.folder{aspect-ratio:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(150deg,color-mix(in srgb,var(--fc) 20%,transparent),transparent),var(--solid)}
+.fi{width:56px;filter:drop-shadow(0 8px 10px color-mix(in srgb,var(--fc) 45%,transparent))}
+.tile.folder span{font-size:14px;font-weight:700;max-width:88%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile.folder small{color:var(--mut);font-size:12px;font-weight:600}
+.ph{display:grid;place-items:center;height:100%;padding:14px;text-align:center;color:var(--mut);word-break:break-all;font-size:13px;font-weight:600}
+.play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;display:grid;place-items:center;padding-left:3px;border-radius:50%;background:#0007;backdrop-filter:blur(6px);color:#fff;font-size:15px;pointer-events:none}
+.cap{position:absolute;inset:auto 0 0 0;padding:24px 10px 8px;background:linear-gradient(transparent,#000b);color:#fff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:.2s}
+.tile:hover .cap{opacity:1}
+.chk{position:absolute;top:8px;left:8px;z-index:2;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;border:2px solid #fff;background:#0005;color:transparent;font-size:13px;font-style:normal;opacity:0;transition:.15s;cursor:pointer}
+.tile:hover .chk,.selecting .chk{opacity:1}
+.sel>.chk{background:var(--grad);color:#fff;border-color:transparent}
+.lst{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.lrow{display:flex;align-items:center;gap:14px;padding:6px 12px;background:var(--solid);border:1px solid var(--line);border-radius:14px;cursor:pointer;animation:rise .3s both}
+.lrow:hover{box-shadow:var(--sh)}.lrow.sel{outline:2px solid var(--a1)}
+.lrow .chk{position:static;flex:none;opacity:1;border-color:var(--mut);background:none}
+.lrow.sel .chk{border-color:transparent}
+.lt{width:44px;height:44px;border-radius:10px;object-fit:cover;flex:none;display:grid;place-items:center;background:var(--line)}
+.ln{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.lf,.ls,.lda{color:var(--mut);font-size:13px;width:110px}.lf{width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{text-align:center;color:var(--mut);padding:90px 0;font-weight:600}.empty::before{content:"☁️";display:block;font-size:56px;margin-bottom:10px}
+#bulk{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;padding:8px 10px 8px 18px;border-radius:999px;background:var(--solid);box-shadow:0 18px 50px -12px rgba(30,20,90,.5);border:1px solid var(--line);z-index:8;font-weight:700}
+#ups{position:fixed;right:20px;bottom:20px;width:320px;max-height:50vh;display:flex;flex-direction:column;background:var(--solid);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 18px 50px -12px rgba(30,20,90,.45);z-index:7}
+.uh{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:800}.uh button{padding:2px 9px}
+.ul{overflow:auto;padding:0 14px 12px}.u{margin-top:10px;font-size:13px}.un{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ub{height:6px;border-radius:9px;background:var(--line);margin:5px 0 3px;overflow:hidden}.ub i{display:block;height:100%;width:0;background:var(--grad);transition:width .2s}
+.u small{color:var(--mut)}.u.ok small{color:#16a34a}.u.bad small{color:#e5484d}
+#toasts{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:20}
+.toast{background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:var(--sh);animation:rise .25s both}
+#lb{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:30;background:rgba(8,10,24,.85);backdrop-filter:blur(12px)}
+#lbc img,#lbc video{max-width:94vw;max-height:90vh;border-radius:14px;box-shadow:0 30px 80px #000a}
+#lb button{position:absolute;width:46px;height:46px;padding:0;border:0;border-radius:50%;background:#ffffff1f;backdrop-filter:blur(8px);color:#fff;font-size:22px}
+#lb button:hover{background:#ffffff40;transform:none;box-shadow:none}#pv,#nx{top:50%;margin-top:-23px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:700px){body{grid-template-columns:1fr}aside{display:none}header{margin:10px}#q{min-width:100%;order:9}#grid{padding:6px 12px 90px}#ups{width:auto;left:12px;right:12px}.lf,.lda{display:none}}
 </style>
-<aside><h1>Channel Drive</h1><div id="tree"></div></aside>
+<aside><h1><span class="logo">☁</span>Channel Drive</h1><div id="tree"></div><div id="sum"></div></aside>
 <main>
   <header>
     <div class="crumbs" id="crumbs"></div>
     <input id="q" type="search" placeholder="Search folders & files">
-    <div class="seg">
-      <button id="m-folder" class="on">Folders</button><button id="m-all">All media</button>
-    </div>
-    <div class="seg">
-      <button data-f="all" class="on">All</button><button data-f="photo">Photos</button><button data-f="video">Videos</button>
-    </div>
-    <button id="newf">New folder</button>
-    <button id="delf">Delete folder</button>
+    <button id="theme" title="Theme">◐</button>
     <label class="btn pri">Upload<input id="file" type="file" multiple hidden accept="image/*,video/*"></label>
-    <label title="Send photos as files so Telegram does not compress them"><input id="orig" type="checkbox" checked> Original quality</label>
+    <label class="o"><input id="orig" type="checkbox" checked> Original quality</label>
+    <div class="brk"></div>
+    <div class="seg"><button id="m-folder" class="on">Folders</button><button id="m-all">All media</button></div>
+    <div class="seg"><button data-f="all" class="on">All</button><button data-f="photo">Photos</button><button data-f="video">Videos</button></div>
+    <select id="sort"><option value="new">Newest</option><option value="old">Oldest</option><option value="name">Name A–Z</option><option value="size">Largest</option></select>
+    <input id="zoom" type="range" min="110" max="320" value="190" title="Thumbnail size">
+    <div class="seg"><button id="v-grid" class="on" title="Gallery">▦</button><button id="v-list" title="List">☰</button></div>
+    <span id="fcol"></span>
+    <button id="newf">New folder</button><button id="renf">Rename</button><button id="delf">Delete folder</button>
   </header>
-  <div id="st"></div>
   <div id="grid"></div>
 </main>
-<div id="lb" hidden><div id="lbc"></div><button id="x" style="top:12px;right:16px">✕</button><button id="pv" style="left:12px">‹</button><button id="nx" style="right:12px">›</button></div>
+<div id="bulk" hidden><span><span id="bn">0</span> selected</span><button id="b-all">Select all</button><button id="b-mv">Move…</button><button id="b-rm" style="color:#e5484d">Delete</button><button id="b-x">✕</button></div>
+<div id="ups" hidden><div class="uh"><span>Uploads</span><button id="ux">✕</button></div><div class="ul"></div></div>
+<div id="toasts"></div>
+<div id="lb" hidden><div id="lbc"></div><button id="x" style="top:14px;right:16px">✕</button><button id="pv" style="left:14px">‹</button><button id="nx" style="right:14px">›</button></div>
 <script>
-const $=s=>document.querySelector(s), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let items=[],cur="",mode="folder",filter="all",view=[],li=0;
-const st=t=>$('#st').textContent=t;
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let items=[],colors={},cur="",mode="folder",filter="all",sort="new",list=false,zoom=190,view=[],li=0,active=0;const sel=new Set();
+const COLS=['#5b8def','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444'];
+const FI='<svg class="fi" viewBox="0 0 64 52"><path d="M4 10a6 6 0 0 1 6-6h14l6 7h24a6 6 0 0 1 6 6v27a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="var(--fc)" opacity=".55"/><path d="M4 20a6 6 0 0 1 6-6h44a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="var(--fc)"/></svg>';
+const S={new:(a,b)=>b.date.localeCompare(a.date),old:(a,b)=>a.date.localeCompare(b.date),name:(a,b)=>a.name.localeCompare(b.name),size:(a,b)=>(b.size||0)-(a.size||0)};
 const api=(u,d)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
-async function load(){items=await (await fetch('/api/items')).json();render()}
+const fmt=n=>{n=n||0;const u=['B','KB','MB','GB','TB'];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+' '+u[i]};
+const colorOf=p=>{while(p){if(colors[p])return colors[p];p=p.includes('/')?p.slice(0,p.lastIndexOf('/')):''}return'#5b8def'};
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;$('#toasts').appendChild(e);setTimeout(()=>e.remove(),3200)}
+function label(s){const d=new Date(s),n=new Date(),k=Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);return k<=0?'Today':k==1?'Yesterday':k<7?'This week':d.toLocaleDateString(undefined,{month:'long',year:'numeric'})}
+async function load(){[items,colors]=await Promise.all([fetch('/api/items').then(r=>r.json()),fetch('/api/colors').then(r=>r.json())]);render()}
 function render(){
-  const paths=new Set();
-  items.forEach(i=>{let p="";if(i.folder)i.folder.split("/").forEach(s=>{p+=(p?"/":"")+s;paths.add(p)})});
-  $('#tree').innerHTML=`<a data-go="" class="${!cur&&mode=='folder'?'on':''}">Home</a>`+[...paths].sort().map(p=>
-    `<a data-go="${esc(p)}" style="padding-left:${12*p.split('/').length}px" class="${p===cur&&mode=='folder'?'on':''}">${esc(p.split('/').pop())}</a>`).join('');
-  let acc="";
-  $('#crumbs').innerHTML=mode=='all'?'All media':`<a data-go="">Home</a>`+cur.split('/').filter(Boolean).map(s=>{acc+=(acc?'/':'')+s;return` / <a data-go="${esc(acc)}">${esc(s)}</a>`}).join('');
+  const paths=new Set(),cnt={};let ph=0,vd=0,sz=0;
+  items.forEach(i=>{if(i.folder){let p="";i.folder.split("/").forEach(s=>{p+=(p?"/":"")+s;paths.add(p);if(i.kind!='folder')cnt[p]=(cnt[p]||0)+1})}if(i.kind!='folder'){i.kind=='video'?vd++:ph++;sz+=i.size||0}});
+  $('#sum').innerHTML=`${ph} photos &amp; files<br>${vd} videos<br>${fmt(sz)} stored`;
+  $('#tree').innerHTML=`<a data-go="" class="${!cur&&mode=='folder'?'on':''}">Home</a>`+[...paths].sort().map(p=>`<a data-go="${esc(p)}" style="--fc:${colorOf(p)};padding-left:${12*p.split('/').length}px" class="${p===cur&&mode=='folder'?'on':''}">${esc(p.split('/').pop())}</a>`).join('');
+  let acc="";$('#crumbs').innerHTML=mode=='all'?'All media':`<a data-go="">Home</a>`+cur.split('/').filter(Boolean).map(s=>{acc+=(acc?'/':'')+s;return` / <a data-go="${esc(acc)}">${esc(s)}</a>`}).join('');
   $('#m-folder').classList.toggle('on',mode=='folder');$('#m-all').classList.toggle('on',mode=='all');
-  $('#delf').hidden=mode=='all'||!cur;
+  $('#v-grid').classList.toggle('on',!list);$('#v-list').classList.toggle('on',list);
   document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f==filter));
-  const q=($('#q').value||'').trim().toLowerCase();const subs=new Set();
+  const fv=mode=='all'||!cur;$('#delf').hidden=$('#renf').hidden=$('#fcol').hidden=fv;
+  $('#fcol').innerHTML=COLS.map(c=>`<i data-col="${c}" style="background:${c}"></i>`).join('')+'<i data-col="" title="Reset">×</i>';
+  const q=($('#q').value||'').trim().toLowerCase(),subs=new Set();
   if(mode=='folder'&&!q)items.forEach(i=>{const f=i.folder;if(f&&(!cur||f.startsWith(cur+'/'))){const r=cur?f.slice(cur.length+1):f;if(r)subs.add(r.split('/')[0])}});
-  view=items.filter(i=>i.kind!='folder'&&(q?(i.name.toLowerCase().includes(q)||i.folder.toLowerCase().includes(q)):(mode=='all'||i.folder===cur))&&(filter=='all'||i.kind==filter)).sort((a,b)=>b.date.localeCompare(a.date));
-  const fo=q?[...paths].filter(p=>p.toLowerCase().includes(q)).sort().map(p=>`<div class="tile folder" data-go="${esc(p)}">📁<span>${esc(p)}</span></div>`).join(''):[...subs].sort().map(s=>`<div class="tile folder" data-go="${esc(cur?cur+'/'+s:s)}">📁<span>${esc(s)}</span></div>`).join('');
-  const me=view.map((m,i)=>`<div class="tile" data-i="${i}">${m.kind=='file'?`<div class="ph">${esc(m.name)}</div>`:`<img loading="lazy" src="/api/thumb/${m.id}" alt="">`}${m.kind=='video'?'<b class="play">▶</b>':''}<div class="bar"><span>${esc((mode=='all'&&m.folder?m.folder+' / ':'')+m.name)}</span><button data-mv="${m.id}">Move</button><button data-rm="${m.id}">Delete</button></div></div>`).join('');
-  $('#grid').innerHTML=fo+me||'<div class="empty">Nothing here yet. Drop photos or videos anywhere on this page, or create a folder.</div>';
+  view=items.filter(i=>i.kind!='folder'&&(q?(i.name.toLowerCase().includes(q)||i.folder.toLowerCase().includes(q)):(mode=='all'||i.folder===cur))&&(filter=='all'||i.kind==filter)).sort(S[sort]);
+  const fl=q?[...paths].filter(p=>p.toLowerCase().includes(q)).sort():[...subs].sort().map(s=>cur?cur+'/'+s:s);
+  const fo=fl.length?'<div class="fgrid">'+fl.map(p=>`<div class="tile folder" data-go="${esc(p)}" style="--fc:${colorOf(p)}">${FI}<span>${esc(q?p:p.split('/').pop())}</span><small>${cnt[p]||0} items</small></div>`).join('')+'</div>':'';
+  const tile=(m,i)=>`<div class="tile${m.kind=='file'?'':' sk'}${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true" style="--r:${Math.min(2.2,Math.max(.5,m.w&&m.h?m.w/m.h:1))}"><i class="chk" data-sel="${m.id}">✓</i>${m.kind=='file'?`<div class="ph">${esc(m.name)}</div>`:`<img src="/api/thumb/${m.id}" alt="" loading="lazy" onload="this.classList.add('in');this.parentNode.classList.remove('sk')" onerror="this.parentNode.classList.remove('sk')">`}${m.kind=='video'?'<b class="play">▶</b>':''}<div class="cap">${esc((mode=='all'&&m.folder?m.folder+' / ':'')+m.name)}</div></div>`;
+  const lrow=(m,i)=>`<div class="lrow${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true"><i class="chk" data-sel="${m.id}">✓</i>${m.kind=='file'?'<span class="lt">📄</span>':`<img class="lt" src="/api/thumb/${m.id}" alt="" loading="lazy">`}<span class="ln">${esc(m.name)}</span><span class="lf">${esc(m.folder||'Home')}</span><span class="ls">${fmt(m.size)}</span><span class="lda">${new Date(m.date).toLocaleDateString()}</span></div>`;
+  let body='';
+  if(list)body='<div class="lst">'+view.map(lrow).join('')+'</div>';
+  else{const grp=sort=='new'||sort=='old';let last=null,open=false;
+    view.forEach((m,i)=>{const g=grp?label(m.date):'';if(i==0||g!==last){if(open)body+='</div>';body+=(g?`<h3 class="gh">${g}</h3>`:'')+`<div class="row" style="--h:${zoom}px">`;open=true;last=g}body+=tile(m,i)});if(open)body+='</div>'}
+  $('#grid').innerHTML=(fo+body)||'<div class="empty">Nothing here yet. Drop photos or videos anywhere, or create a folder.</div>';
+  syncBulk();
 }
-document.body.addEventListener('click',async e=>{
-  const g=e.target.closest('[data-go]'),rm=e.target.closest('[data-rm]'),mv=e.target.closest('[data-mv]'),t=e.target.closest('[data-i]'),f=e.target.closest('[data-f]');
-  if(rm){if(confirm('Delete this file from the channel?')){await api('/api/delete',{ids:[+rm.dataset.rm]});load()}}
-  else if(mv){const to=prompt('Move to folder (blank = Home):',cur);if(to!==null){await api('/api/move',{ids:[+mv.dataset.mv],folder:to});load()}}
-  else if(g){cur=g.dataset.go;mode='folder';$('#q').value='';render()}
+function syncBulk(){document.body.classList.toggle('selecting',sel.size>0);$('#bulk').hidden=!sel.size;$('#bn').textContent=sel.size}
+function tog(id){sel.has(id)?sel.delete(id):sel.add(id);document.querySelectorAll(`[data-sel="${id}"]`).forEach(c=>c.parentNode.classList.toggle('sel',sel.has(id)));syncBulk()}
+async function moveIds(ids,dest){toast(`Moving ${ids.length}…`);await api('/api/move',{ids,folder:dest});sel.clear();toast(`Moved to ${dest||'Home'}`);load()}
+async function setColor(c){if(c)colors[cur]=c;else delete colors[cur];await api('/api/colors',{folder:cur,color:c});render()}
+document.body.addEventListener('click',e=>{
+  const T=s=>e.target.closest(s),c=T('[data-sel]'),col=T('[data-col]'),g=T('[data-go]'),f=T('[data-f]'),t=T('[data-i]');
+  if(c)tog(+c.dataset.sel);
+  else if(col)setColor(col.dataset.col);
+  else if(g){cur=g.dataset.go;mode='folder';$('#q').value='';sel.clear();render()}
   else if(f){filter=f.dataset.f;render()}
-  else if(t)show(+t.dataset.i);
+  else if(t){sel.size?tog(view[+t.dataset.i].id):show(+t.dataset.i)}
 });
-$('#q').oninput=render;$('#m-folder').onclick=()=>{mode='folder';render()};$('#m-all').onclick=()=>{mode='all';render()};
-$('#newf').onclick=async()=>{const n=prompt('Folder name:');if(n){await api('/api/folder',{name:(cur?cur+'/':'')+n});load()}};
+$('#q').oninput=render;$('#sort').onchange=e=>{sort=e.target.value;render()};
+$('#zoom').oninput=e=>{zoom=+e.target.value;document.querySelectorAll('.row').forEach(r=>r.style.setProperty('--h',zoom+'px'))};
+$('#m-folder').onclick=()=>{mode='folder';render()};$('#m-all').onclick=()=>{mode='all';render()};
+$('#v-grid').onclick=()=>{list=false;render()};$('#v-list').onclick=()=>{list=true;render()};
+$('#newf').onclick=async()=>{const n=prompt('Folder name:');if(n){await api('/api/folder',{name:(cur?cur+'/':'')+n.replace(/^\/+|\/+$/g,'')});toast('Folder created');load()}};
 $('#delf').onclick=async()=>{const ids=items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).map(i=>i.id);
-  if(confirm(`Delete "${cur}" and its ${ids.length} items from the channel?`)){await api('/api/delete',{ids});cur=cur.split('/').slice(0,-1).join('/');load()}};
-function up(files){
-  const list=[...files];if(!list.length)return;
-  const folder=cur,orig=$('#orig').checked,total=list.reduce((a,f)=>a+f.size,0)||1;
-  let next=0,done=0,fail=0;const prog={};
-  const upd=()=>{const sent=Object.values(prog).reduce((a,b)=>a+b,0);st(`Uploading ${done}/${list.length} files (${Math.round(sent/total*100)}% sent to server)${fail?`, ${fail} failed`:''}`)};
-  const one=(f,i)=>new Promise(res=>{const fd=new FormData();fd.append('folder',folder);fd.append('original',orig);fd.append('files',f);
+  if(confirm(`Delete "${cur}" and its ${ids.length} items from the channel?`)){await api('/api/delete',{ids});cur=cur.split('/').slice(0,-1).join('/');toast('Folder deleted');load()}};
+$('#renf').onclick=async()=>{const leaf=cur.split('/').pop(),n=prompt('Rename folder:',leaf);if(!n||n===leaf)return;
+  const np=(cur.includes('/')?cur.slice(0,cur.lastIndexOf('/'))+'/':'')+n.replace(/\//g,'-'),gp={};
+  items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).forEach(i=>{const t=np+i.folder.slice(cur.length);(gp[t]=gp[t]||[]).push(i.id)});
+  toast('Renaming…');for(const t in gp)await api('/api/move',{ids:gp[t],folder:t});
+  if(colors[cur]){await api('/api/colors',{folder:np,color:colors[cur]});await api('/api/colors',{folder:cur,color:''})}
+  cur=np;toast('Renamed');load()};
+$('#b-x').onclick=()=>{sel.clear();render()};
+$('#b-all').onclick=()=>{view.forEach(m=>sel.add(m.id));render()};
+$('#b-mv').onclick=()=>{const to=prompt('Move to folder (blank = Home):',cur);if(to!==null)moveIds([...sel],to.trim().replace(/^\/+|\/+$/g,''))};
+$('#b-rm').onclick=async()=>{if(confirm(`Delete ${sel.size} item(s) from the channel?`)){const ids=[...sel];sel.clear();await api('/api/delete',{ids});toast('Deleted');load()}};
+function up(files,dest=cur){
+  const l=[...files];if(!l.length)return;const box=$('#ups'),ul=box.querySelector('.ul'),orig=$('#orig').checked;
+  if(!active)ul.innerHTML='';box.hidden=false;active+=l.length;
+  const rows=l.map(f=>{const r=document.createElement('div');r.className='u';r.innerHTML=`<div class="un">${esc(f.name)}</div><div class="ub"><i></i></div><small>Waiting…</small>`;ul.appendChild(r);return r});
+  const set=(r,p,t,c)=>{r.querySelector('i').style.width=p+'%';r.querySelector('small').textContent=t;if(c)r.className='u '+c};
+  const one=(f,r)=>new Promise(res=>{const fd=new FormData();fd.append('folder',dest);fd.append('original',orig);fd.append('files',f);
     const x=new XMLHttpRequest();x.open('POST','/api/upload');
-    x.upload.onprogress=e=>{prog[i]=e.loaded;upd()};
-    x.onload=()=>{if(x.status!=200)fail++;prog[i]=f.size;done++;upd();res()};
-    x.onerror=()=>{fail++;done++;upd();res()};x.send(fd)});
-  const worker=async()=>{while(next<list.length){const i=next++;await one(list[i],i)}};
-  Promise.all([worker(),worker(),worker()]).then(()=>{st(fail?`Finished, ${fail} failed`:'Upload complete');load()});
+    x.upload.onprogress=e=>{const p=e.loaded/e.total*100;set(r,p,p>=100?'Sending to Telegram…':Math.round(p)+'%')};
+    x.onload=()=>{const ok=x.status==200;set(r,100,ok?'Done':'Failed',ok?'ok':'bad');res(ok)};
+    x.onerror=()=>{set(r,100,'Failed','bad');res(false)};x.send(fd)});
+  let n=0,bad=0;const w=async()=>{while(n<l.length){const i=n++;if(!await one(l[i],rows[i]))bad++}};
+  Promise.all([w(),w(),w()]).then(()=>{active-=l.length;toast(bad?`${bad} upload(s) failed`:`${l.length} uploaded`);load();setTimeout(()=>{if(!active)box.hidden=true},6000)});
 }
-$('#file').onchange=e=>{up(e.target.files);e.target.value=''};
-const gr=$('#grid');
-gr.ondragover=e=>{e.preventDefault();gr.classList.add('drag')};gr.ondragleave=()=>gr.classList.remove('drag');
-gr.ondrop=e=>{e.preventDefault();gr.classList.remove('drag');up(e.dataTransfer.files)};
-function show(i){li=(i+view.length)%view.length;const m=view[li];
-  if(m.kind=='file'){location='/api/file/'+m.id;return}
+$('#file').onchange=e=>{up(e.target.files);e.target.value=''};$('#ux').onclick=()=>$('#ups').hidden=true;
+const clr=()=>{document.querySelectorAll('.dt').forEach(x=>x.classList.remove('dt'));$('#grid').classList.remove('drag')};
+document.addEventListener('dragstart',e=>{const t=e.target.closest&&e.target.closest('[data-i]');if(!t)return;const id=view[+t.dataset.i].id;e.dataTransfer.setData('text/x-ids',JSON.stringify(sel.has(id)?[...sel]:[id]));e.dataTransfer.effectAllowed='move'});
+document.addEventListener('dragover',e=>{e.preventDefault();clr();const t=e.target.closest('[data-go]');if(t)t.classList.add('dt');else if(e.dataTransfer.types.includes('Files'))$('#grid').classList.add('drag')});
+document.addEventListener('dragleave',e=>{if(!e.relatedTarget)clr()});document.addEventListener('dragend',clr);
+document.addEventListener('drop',e=>{e.preventDefault();clr();const t=e.target.closest('[data-go]'),dest=t?t.dataset.go:cur,raw=e.dataTransfer.getData('text/x-ids');
+  if(raw){if(t)moveIds(JSON.parse(raw),dest)}else if(e.dataTransfer.files.length)up(e.dataTransfer.files,dest)});
+function show(i){li=(i+view.length)%view.length;const m=view[li];if(m.kind=='file'){location='/api/file/'+m.id;return}
   $('#lb').hidden=false;$('#lbc').innerHTML=m.kind=='video'?`<video src="/api/file/${m.id}" controls autoplay></video>`:`<img src="/api/file/${m.id}" alt="">`}
 const close=()=>{$('#lb').hidden=true;$('#lbc').innerHTML=''};
 $('#x').onclick=close;$('#pv').onclick=()=>show(li-1);$('#nx').onclick=()=>show(li+1);
-document.onkeydown=e=>{if($('#lb').hidden)return;if(e.key=='Escape')close();if(e.key=='ArrowLeft')show(li-1);if(e.key=='ArrowRight')show(li+1)};
-load();
+document.onkeydown=e=>{if($('#lb').hidden){if(e.key=='Escape'&&sel.size){sel.clear();render()}return}if(e.key=='Escape')close();if(e.key=='ArrowLeft')show(li-1);if(e.key=='ArrowRight')show(li+1)};
+let th='auto';try{th=localStorage.getItem('th')||'auto'}catch(e){}
+const ap=()=>{document.documentElement.dataset.theme=th;$('#theme').textContent={auto:'◐',light:'☀',dark:'☾'}[th]};
+$('#theme').onclick=()=>{th={auto:'light',light:'dark',dark:'auto'}[th];try{localStorage.setItem('th',th)}catch(e){}ap()};
+ap();load();
 </script>
 </html>
