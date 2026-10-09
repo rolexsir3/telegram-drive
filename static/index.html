@@ -89,7 +89,7 @@ input[type=range]{width:100px;accent-color:var(--a2)}input[type=checkbox]{accent
   <header>
     <div class="crumbs" id="crumbs"></div>
     <input id="q" type="search" placeholder="Search folders & files">
-    <button id="theme" title="Theme">◐</button>
+    <button id="refresh" title="Refresh">↻</button><button id="theme" title="Theme">◐</button>
     <label class="btn pri">Upload<input id="file" type="file" multiple hidden accept="image/*,video/*"></label>
     <label class="o"><input id="orig" type="checkbox" checked> Original quality</label>
     <div class="brk"></div>
@@ -156,7 +156,7 @@ document.body.addEventListener('click',e=>{
   else if(f){filter=f.dataset.f;render()}
   else if(t){sel.size?tog(view[+t.dataset.i].id):show(+t.dataset.i)}
 });
-$('#q').oninput=render;$('#sort').onchange=e=>{sort=e.target.value;render()};
+$('#refresh').onclick=()=>{load();toast('Refreshed')};$('#q').oninput=render;$('#sort').onchange=e=>{sort=e.target.value;render()};
 $('#zoom').oninput=e=>{zoom=+e.target.value;document.querySelectorAll('.row').forEach(r=>r.style.setProperty('--h',zoom+'px'))};
 $('#m-folder').onclick=()=>{mode='folder';render()};$('#m-all').onclick=()=>{mode='all';render()};
 $('#v-grid').onclick=()=>{list=false;render()};$('#v-list').onclick=()=>{list=true;render()};
