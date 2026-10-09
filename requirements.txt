@@ -4,3 +4,4 @@ python-multipart
 telethon
 hachoir
 cryptg
+requests

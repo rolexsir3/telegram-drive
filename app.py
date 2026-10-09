@@ -5,7 +5,7 @@ Env: API_ID, API_HASH, CHANNEL_ID (e.g. -1001234567890). Optional: APP_PASSWORD,
 import os, json, base64, hmac, mimetypes, shutil, tempfile, asyncio
 from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
-from telethon import TelegramClient
+from telethon import TelegramClient, events
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 THUMBS = os.path.join(BASE, "thumbs"); os.makedirs(THUMBS, exist_ok=True)
@@ -40,6 +40,7 @@ async def start():
     await client.start()          # first run: asks for phone + login code in the terminal
     await client.get_dialogs()
     ent = await client.get_entity(CHANNEL)
+    client.add_event_handler(on_new, events.NewMessage(chats=ent))
 
 
 def folder_of(m):
@@ -54,18 +55,25 @@ def kind_of(m):
     return "file"
 
 
+def to_item(m):
+    f = folder_of(m)
+    if m.media and m.file:
+        return dict(id=m.id, folder=f, kind=kind_of(m), name=m.file.name or f"{m.id}{m.file.ext or ''}",
+                    size=m.file.size, w=m.file.width or 0, h=m.file.height or 0, date=m.date.isoformat())
+    if f:
+        return dict(id=m.id, folder=f, kind="folder", date=m.date.isoformat())
+
+
+async def on_new(ev):                    # posts made by the upload bot show up without a rescan
+    it = to_item(ev.message)
+    if it and cache["items"] is not None and not any(x["id"] == it["id"] for x in cache["items"]):
+        cache["items"].insert(0, it)
+
+
 @app.get("/api/items")
 async def items():
     if cache["items"] is None:
-        out = []
-        async for m in client.iter_messages(ent):
-            f = folder_of(m)
-            if m.media and m.file:
-                out.append(dict(id=m.id, folder=f, kind=kind_of(m), name=m.file.name or f"{m.id}{m.file.ext or ''}",
-                                size=m.file.size, w=m.file.width or 0, h=m.file.height or 0, date=m.date.isoformat()))
-            elif f:
-                out.append(dict(id=m.id, folder=f, kind="folder", date=m.date.isoformat()))
-        cache["items"] = out
+        cache["items"] = [i async for i in (to_item(m) async for m in client.iter_messages(ent)) if i]
     return cache["items"]
 
 
