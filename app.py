@@ -2,7 +2,7 @@
 Folders = a caption tag "📁 path/to/folder" on each file (+ a text marker message for empty folders).
 Env: API_ID, API_HASH, CHANNEL_ID (e.g. -1001234567890). Optional: APP_PASSWORD, HOST.
 """
-import os, base64, hmac, mimetypes, shutil, tempfile, asyncio
+import os, json, base64, hmac, mimetypes, shutil, tempfile, asyncio
 from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from telethon import TelegramClient
@@ -62,7 +62,7 @@ async def items():
             f = folder_of(m)
             if m.media and m.file:
                 out.append(dict(id=m.id, folder=f, kind=kind_of(m), name=m.file.name or f"{m.id}{m.file.ext or ''}",
-                                size=m.file.size, date=m.date.isoformat()))
+                                size=m.file.size, w=m.file.width or 0, h=m.file.height or 0, date=m.date.isoformat()))
             elif f:
                 out.append(dict(id=m.id, folder=f, kind="folder", date=m.date.isoformat()))
         cache["items"] = out
@@ -96,7 +96,7 @@ async def upload(folder: str = Form(""), original: bool = Form(True), files: lis
         if cache["items"] is not None and getattr(msg, "file", None):   # update list without rescanning the channel
             cache["items"].insert(0, dict(id=msg.id, folder=folder, kind=kind_of(msg),
                                           name=msg.file.name or f"{msg.id}{msg.file.ext or ''}",
-                                          size=msg.file.size, date=msg.date.isoformat()))
+                                          size=msg.file.size, w=msg.file.width or 0, h=msg.file.height or 0, date=msg.date.isoformat()))
     return {"ok": True}
 
 
@@ -152,6 +152,23 @@ async def delete(d: dict):
     await client.delete_messages(ent, d["ids"])
     cache["items"] = None
     return {"ok": True}
+
+
+COLORS = os.path.join(BASE, "colors.json")
+
+
+@app.get("/api/colors")
+async def colors_get():
+    return json.load(open(COLORS)) if os.path.exists(COLORS) else {}
+
+
+@app.post("/api/colors")
+async def colors_set(d: dict):
+    c = await colors_get()
+    if d.get("color"): c[d["folder"]] = d["color"]
+    else: c.pop(d["folder"], None)
+    json.dump(c, open(COLORS, "w"))
+    return c
 
 
 @app.get("/")
