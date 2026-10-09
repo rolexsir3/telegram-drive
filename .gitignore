@@ -1,7 +1,8 @@
-venv/
-__pycache__/
-*.session
-*.session-journal
-thumbs/
-colors.json
-.env
+   venv/
+   __pycache__/
+   *.session
+   *.session-journal
+   thumbs/
+   colors.json
+   bot_state.json
+   .env
