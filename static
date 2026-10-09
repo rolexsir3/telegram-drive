@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Channel Drive</title>
+<style>
+:root{--bg:#e9eef3;--panel:#fff;--ink:#10202f;--mut:#64748b;--acc:#1f7ae0;--line:#d5dde6}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1620;--panel:#16212d;--ink:#e6edf4;--mut:#8ea0b3;--acc:#4a9cf0;--line:#25323f}}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:grid;grid-template-columns:230px 1fr;font:15px/1.4 ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:14px 8px;overflow:auto}
+aside h1{font-size:17px;margin:0 8px 12px}
+aside a{display:block;padding:6px 12px;border-radius:6px;cursor:pointer;color:var(--ink)}
+aside a:hover{background:var(--bg)} aside a.on{background:var(--acc);color:#fff}
+main{display:flex;flex-direction:column;min-width:0}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.crumbs{flex:1;min-width:140px;font-weight:600}.crumbs a{cursor:pointer;color:var(--mut)}.crumbs a:last-child{color:var(--ink)}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer}
+button.pri,.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+button.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.seg{display:flex;gap:4px}
+#st{padding:0 16px;color:var(--mut);min-height:20px;font-size:13px}
+#grid{flex:1;overflow:auto;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;align-content:start}
+#grid.drag{outline:2px dashed var(--acc);outline-offset:-8px}
+.tile{position:relative;aspect-ratio:1;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer}
+.tile img{width:100%;height:100%;object-fit:cover;display:block}
+.tile.folder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:34px}
+.tile.folder span{font-size:14px;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph{padding:12px;color:var(--mut);word-break:break-all;font-size:13px}
+.play{position:absolute;top:8px;left:8px;background:#000a;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px}
+.bar{position:absolute;inset:auto 0 0 0;display:none;gap:4px;align-items:center;padding:6px;background:#000b;color:#fff;font-size:12px}
+.bar span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar button{padding:2px 6px;font-size:12px}
+.tile:hover .bar,.tile:focus-within .bar{display:flex}
+.empty{grid-column:1/-1;color:var(--mut);padding:40px 0;text-align:center}
+#lb{position:fixed;inset:0;background:#000e;display:flex;align-items:center;justify-content:center;z-index:9}
+#lb[hidden]{display:none}
+#lbc img,#lbc video{max-width:94vw;max-height:90vh}
+#lb button{position:absolute;background:#fff2;color:#fff;border:0;font-size:22px}
+@media(max-width:700px){body{grid-template-columns:1fr}aside{display:none}}
+</style>
+<aside><h1>Channel Drive</h1><div id="tree"></div></aside>
+<main>
+  <header>
+    <div class="crumbs" id="crumbs"></div>
+    <div class="seg">
+      <button id="m-folder" class="on">Folders</button><button id="m-all">All media</button>
+    </div>
+    <div class="seg">
+      <button data-f="all" class="on">All</button><button data-f="photo">Photos</button><button data-f="video">Videos</button>
+    </div>
+    <button id="newf">New folder</button>
+    <button id="delf">Delete folder</button>
+    <label class="btn pri">Upload<input id="file" type="file" multiple hidden accept="image/*,video/*"></label>
+    <label title="Send photos as files so Telegram does not compress them"><input id="orig" type="checkbox" checked> Original quality</label>
+  </header>
+  <div id="st"></div>
+  <div id="grid"></div>
+</main>
+<div id="lb" hidden><div id="lbc"></div><button id="x" style="top:12px;right:16px">✕</button><button id="pv" style="left:12px">‹</button><button id="nx" style="right:12px">›</button></div>
+<script>
+const $=s=>document.querySelector(s), esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let items=[],cur="",mode="folder",filter="all",view=[],li=0;
+const st=t=>$('#st').textContent=t;
+const api=(u,d)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
+async function load(){items=await (await fetch('/api/items')).json();render()}
+function render(){
+  const paths=new Set();
+  items.forEach(i=>{let p="";if(i.folder)i.folder.split("/").forEach(s=>{p+=(p?"/":"")+s;paths.add(p)})});
+  $('#tree').innerHTML=`<a data-go="" class="${!cur&&mode=='folder'?'on':''}">Home</a>`+[...paths].sort().map(p=>
+    `<a data-go="${esc(p)}" style="padding-left:${12*p.split('/').length}px" class="${p===cur&&mode=='folder'?'on':''}">${esc(p.split('/').pop())}</a>`).join('');
+  let acc="";
+  $('#crumbs').innerHTML=mode=='all'?'All media':`<a data-go="">Home</a>`+cur.split('/').filter(Boolean).map(s=>{acc+=(acc?'/':'')+s;return` / <a data-go="${esc(acc)}">${esc(s)}</a>`}).join('');
+  $('#m-folder').classList.toggle('on',mode=='folder');$('#m-all').classList.toggle('on',mode=='all');
+  $('#delf').hidden=mode=='all'||!cur;
+  document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f==filter));
+  const subs=new Set();
+  if(mode=='folder')items.forEach(i=>{const f=i.folder;if(f&&(!cur||f.startsWith(cur+'/'))){const r=cur?f.slice(cur.length+1):f;if(r)subs.add(r.split('/')[0])}});
+  view=items.filter(i=>i.kind!='folder'&&(mode=='all'||i.folder===cur)&&(filter=='all'||i.kind==filter)).sort((a,b)=>b.date.localeCompare(a.date));
+  const fo=[...subs].sort().map(s=>`<div class="tile folder" data-go="${esc(cur?cur+'/'+s:s)}">📁<span>${esc(s)}</span></div>`).join('');
+  const me=view.map((m,i)=>`<div class="tile" data-i="${i}">${m.kind=='file'?`<div class="ph">${esc(m.name)}</div>`:`<img loading="lazy" src="/api/thumb/${m.id}" alt="">`}${m.kind=='video'?'<b class="play">▶</b>':''}<div class="bar"><span>${esc((mode=='all'&&m.folder?m.folder+' / ':'')+m.name)}</span><button data-mv="${m.id}">Move</button><button data-rm="${m.id}">Delete</button></div></div>`).join('');
+  $('#grid').innerHTML=fo+me||'<div class="empty">Nothing here yet. Drop photos or videos anywhere on this page, or create a folder.</div>';
+}
+document.body.addEventListener('click',async e=>{
+  const g=e.target.closest('[data-go]'),rm=e.target.closest('[data-rm]'),mv=e.target.closest('[data-mv]'),t=e.target.closest('[data-i]'),f=e.target.closest('[data-f]');
+  if(rm){if(confirm('Delete this file from the channel?')){await api('/api/delete',{ids:[+rm.dataset.rm]});load()}}
+  else if(mv){const to=prompt('Move to folder (blank = Home):',cur);if(to!==null){await api('/api/move',{ids:[+mv.dataset.mv],folder:to});load()}}
+  else if(g){cur=g.dataset.go;mode='folder';render()}
+  else if(f){filter=f.dataset.f;render()}
+  else if(t)show(+t.dataset.i);
+});
+$('#m-folder').onclick=()=>{mode='folder';render()};$('#m-all').onclick=()=>{mode='all';render()};
+$('#newf').onclick=async()=>{const n=prompt('Folder name:');if(n){await api('/api/folder',{name:(cur?cur+'/':'')+n});load()}};
+$('#delf').onclick=async()=>{const ids=items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).map(i=>i.id);
+  if(confirm(`Delete "${cur}" and its ${ids.length} items from the channel?`)){await api('/api/delete',{ids});cur=cur.split('/').slice(0,-1).join('/');load()}};
+function up(files){
+  if(!files.length)return;const fd=new FormData();fd.append('folder',cur);fd.append('original',$('#orig').checked);
+  [...files].forEach(f=>fd.append('files',f));const x=new XMLHttpRequest();x.open('POST','/api/upload');
+  x.upload.onprogress=e=>st(e.loaded==e.total?'Sending to Telegram…':`Uploading ${Math.round(e.loaded/e.total*100)}%`);
+  x.onload=()=>{st(x.status==200?'Upload complete':'Upload failed: '+x.responseText);load()};x.send(fd);
+}
+$('#file').onchange=e=>{up(e.target.files);e.target.value=''};
+const gr=$('#grid');
+gr.ondragover=e=>{e.preventDefault();gr.classList.add('drag')};gr.ondragleave=()=>gr.classList.remove('drag');
+gr.ondrop=e=>{e.preventDefault();gr.classList.remove('drag');up(e.dataTransfer.files)};
+function show(i){li=(i+view.length)%view.length;const m=view[li];
+  if(m.kind=='file'){location='/api/file/'+m.id;return}
+  $('#lb').hidden=false;$('#lbc').innerHTML=m.kind=='video'?`<video src="/api/file/${m.id}" controls autoplay></video>`:`<img src="/api/file/${m.id}" alt="">`}
+const close=()=>{$('#lb').hidden=true;$('#lbc').innerHTML=''};
+$('#x').onclick=close;$('#pv').onclick=()=>show(li-1);$('#nx').onclick=()=>show(li+1);
+document.onkeydown=e=>{if($('#lb').hidden)return;if(e.key=='Escape')close();if(e.key=='ArrowLeft')show(li-1);if(e.key=='ArrowRight')show(li+1)};
+load();
+</script>
+</html>
