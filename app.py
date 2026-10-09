@@ -16,6 +16,7 @@ TAG = "📁"
 app = FastAPI()
 cache = {"items": None}
 sem = asyncio.Semaphore(4)
+up_sem = asyncio.Semaphore(3)   # parallel uploads to Telegram
 ent = None
 
 
@@ -77,19 +78,25 @@ async def new_folder(d: dict):
 
 @app.post("/api/upload")
 async def upload(folder: str = Form(""), original: bool = Form(True), files: list[UploadFile] = File(...)):
+    folder = folder.strip("/ ")
     for f in files:
         tmp = tempfile.mkdtemp()
         path = os.path.join(tmp, os.path.basename(f.filename))   # keeps the real filename in Telegram
         with open(path, "wb") as o:
-            shutil.copyfileobj(f.file, o)
+            while chunk := await f.read(1024 * 1024):             # async copy, does not block other uploads
+                o.write(chunk)
         mime = mimetypes.guess_type(path)[0] or ""
         try:
-            await client.send_file(ent, path, caption=f"{TAG} {folder}".strip(),
-                                   force_document=original and mime.startswith("image/"),  # photos keep full quality
-                                   supports_streaming=True)
+            async with up_sem:
+                msg = await client.send_file(ent, path, caption=f"{TAG} {folder}".strip(),
+                                             force_document=original and mime.startswith("image/"),  # photos keep full quality
+                                             supports_streaming=True)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
-    cache["items"] = None
+        if cache["items"] is not None and getattr(msg, "file", None):   # update list without rescanning the channel
+            cache["items"].insert(0, dict(id=msg.id, folder=folder, kind=kind_of(msg),
+                                          name=msg.file.name or f"{msg.id}{msg.file.ext or ''}",
+                                          size=msg.file.size, date=msg.date.isoformat()))
     return {"ok": True}
 
 
