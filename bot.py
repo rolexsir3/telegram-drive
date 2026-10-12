@@ -72,6 +72,7 @@ HELP = ("Send photos, videos or albums and I store them in your drive.\n\n"
         "/folders - pick from folders I know\n"
         "/home - go back to the top level\n/where - show current folder\n"
         "/quiet on|off - skip the saving/summary replies\n"
+        "/fast on|off - save through your own account (much faster)\n"
         "/split on|off - keep Photos and Videos in separate subfolders\n\n"
         "Tip: send as File to keep original photo quality.")
 
@@ -130,6 +131,9 @@ def handle(m):
         elif cmd == "/split":
             st["split"] = arg.lower() != "off"; save()
             say(chat, "Photos and Videos go to separate subfolders." if st["split"] else "Everything goes straight into the folder.")
+        elif cmd == "/fast":
+            st["fast"] = arg.lower() != "off"; save()
+            say(chat, "Fast mode on: files are saved through your own account (much quicker)." if st["fast"] else "Fast mode off: the bot saves files itself (slower, about 20 per minute).")
         elif cmd == "/quiet":
             st["quiet"] = arg.lower() != "off"; save()
             say(chat, "Quiet mode on: I only reply on errors." if st["quiet"] else "Quiet mode off.")
@@ -138,6 +142,8 @@ def handle(m):
         return
     if not any(k in m for k in ("photo", "video", "document", "animation", "video_note")):
         return
+    if st.get("fast", True):
+        return                       # fast mode: your own account saves these (see app.py)
     dest = target(kind_of(m))
     if q.empty() and not st.get("quiet"):
         say(chat, "Got it, saving…")

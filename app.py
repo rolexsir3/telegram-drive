@@ -2,7 +2,7 @@
 Folders = a caption tag "📁 path/to/folder" on each file (+ a text marker message for empty folders).
 Env: API_ID, API_HASH, CHANNEL_ID (e.g. -1001234567890). Optional: APP_PASSWORD, HOST.
 """
-import os, json, base64, hmac, mimetypes, shutil, tempfile, asyncio
+import os, json, requests, base64, hmac, mimetypes, shutil, tempfile, asyncio
 from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from telethon import TelegramClient, events
@@ -41,6 +41,14 @@ async def start():
     await client.get_dialogs()
     ent = await client.get_entity(CHANNEL)
     client.add_event_handler(on_new, events.NewMessage(chats=ent))
+    if os.getenv("BOT_TOKEN") and os.getenv("OWNER_ID"):        # fast mode: save what you send the bot via your own account
+        try:
+            bot_ent = await client.get_entity(int(os.environ["BOT_TOKEN"].split(":")[0]))
+            client.add_event_handler(on_bot_media, events.NewMessage(chats=bot_ent, outgoing=True))
+            asyncio.create_task(fast_worker())
+            print("fast upload mode ready", flush=True)
+        except Exception as e:
+            print("fast mode unavailable:", e, flush=True)
 
 
 def folder_of(m):
@@ -68,6 +76,69 @@ async def on_new(ev):                    # posts made by the upload bot show up 
     it = to_item(ev.message)
     if it and cache["items"] is not None and not any(x["id"] == it["id"] for x in cache["items"]):
         cache["items"].insert(0, it)
+
+
+BSTATE = os.path.join(BASE, "bot_state.json")
+fq = asyncio.Queue()
+
+
+def bstate():
+    try:
+        return json.load(open(BSTATE))
+    except Exception:
+        return {}
+
+
+async def bot_say(text):
+    url = f"https://api.telegram.org/bot{os.environ['BOT_TOKEN']}/sendMessage"
+    await asyncio.to_thread(requests.post, url, json={"chat_id": int(os.environ["OWNER_ID"]), "text": text}, timeout=30)
+
+
+async def on_bot_media(ev):              # files you send or forward to the bot
+    m = ev.message
+    if m.media and m.file and bstate().get("fast", True):
+        await fq.put(m)
+
+
+def dest_for(m, s):
+    f, mime = s.get("folder", ""), m.file.mime_type or ""
+    if s.get("split", True):
+        sub = "Videos" if m.video or mime.startswith("video/") else "Photos" if m.photo or mime.startswith("image/") else "Files"
+        f = (f + "/" if f else "") + sub
+    return f
+
+
+async def fast_worker():
+    """Albums of 10 per request through your own account: far above the bot's ~20 posts/minute limit."""
+    while True:
+        batch = [await fq.get()]
+        await asyncio.sleep(1.5)         # let a whole album or forward batch arrive
+        while not fq.empty() and len(batch) < 200:
+            batch.append(fq.get_nowait())
+        s, ok, bad, dests = bstate(), 0, 0, set()
+        for key in ("media", "doc"):     # photos+videos can share an album, plain files cannot mix with them
+            grp = [m for m in batch if ("media" if m.photo or m.video else "doc") == key]
+            for i in range(0, len(grp), 10):
+                chunk = grp[i:i + 10]
+                caps = []
+                for m in chunk:
+                    d = dest_for(m, s)
+                    dests.add(d or "Home")
+                    caps.append(f"{TAG} {d}".strip())
+                try:
+                    if len(chunk) == 1:
+                        await client.send_file(ent, chunk[0], caption=caps[0])
+                    else:
+                        await client.send_file(ent, chunk, caption=caps)
+                    ok += len(chunk)
+                except Exception as e:
+                    bad += len(chunk)
+                    print("fast send failed:", e, flush=True)
+        if not s.get("quiet"):
+            try:
+                await bot_say(f"Saved {ok} file(s) to {', '.join(sorted(dests))}" + (f" ({bad} failed)" if bad else ""))
+            except Exception as e:
+                print("summary failed:", e, flush=True)
 
 
 @app.get("/api/items")
