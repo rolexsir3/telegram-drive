@@ -175,23 +175,23 @@ document.body.addEventListener('click',e=>{
   const T=s=>e.target.closest(s),c=T('[data-sel]'),col=T('[data-col]'),g=T('[data-go]'),f=T('[data-f]'),t=T('[data-i]');
   if(c)tog(+c.dataset.sel);
   else if(col)setColor(col.dataset.col);
-  else if(g){cur=g.dataset.go;mode='folder';$('#q').value='';sel.clear();render()}
+  else if(g){go(g.dataset.go)}
   else if(f){filter=f.dataset.f;render()}
   else if(t){sel.size?tog(view[+t.dataset.i].id):show(+t.dataset.i)}
 });
 $('#refresh').onclick=()=>{load();toast('Refreshed')};$('#q').oninput=render;$('#sort').onchange=e=>{sort=e.target.value;render()};
 $('#zoom').oninput=e=>{zoom=+e.target.value;document.querySelectorAll('.row').forEach(r=>r.style.setProperty('--h',zoom+'px'))};
-$('#m-folder').onclick=()=>{mode='folder';render()};$('#m-all').onclick=()=>{mode='all';render()};
+$('#m-folder').onclick=()=>go(cur);$('#m-all').onclick=()=>go(cur,'all');
 $('#v-grid').onclick=()=>{list=false;render()};$('#v-list').onclick=()=>{list=true;render()};
 $('#newf').onclick=async()=>{const n=prompt('Folder name:');if(n){await api('/api/folder',{name:(cur?cur+'/':'')+n.replace(/^\/+|\/+$/g,'')});toast('Folder created');load()}};
 $('#delf').onclick=async()=>{const ids=items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).map(i=>i.id);
-  if(confirm(`Delete "${cur}" and its ${ids.length} items from the channel?`)){await api('/api/delete',{ids});cur=cur.split('/').slice(0,-1).join('/');toast('Folder deleted');load()}};
+  if(confirm(`Delete "${cur}" and its ${ids.length} items from the channel?`)){await api('/api/delete',{ids});go(cur.split('/').slice(0,-1).join('/'),'folder','r');toast('Folder deleted');load()}};
 $('#renf').onclick=async()=>{const leaf=cur.split('/').pop(),n=prompt('Rename folder:',leaf);if(!n||n===leaf)return;
   const np=(cur.includes('/')?cur.slice(0,cur.lastIndexOf('/'))+'/':'')+n.replace(/\//g,'-'),gp={};
   items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).forEach(i=>{const t=np+i.folder.slice(cur.length);(gp[t]=gp[t]||[]).push(i.id)});
   toast('Renaming…');for(const t in gp)await api('/api/move',{ids:gp[t],folder:t});
   if(colors[cur]){await api('/api/colors',{folder:np,color:colors[cur]});await api('/api/colors',{folder:cur,color:''})}
-  cur=np;toast('Renamed');load()};
+  go(np,'folder','r');toast('Renamed');load()};
 $('#b-x').onclick=()=>{sel.clear();render()};
 $('#b-all').onclick=()=>{view.forEach(m=>sel.add(m.id));render()};
 $('#b-mv').onclick=()=>{const to=prompt('Move to folder (blank = Home):',cur);if(to!==null)moveIds([...sel],to.trim().replace(/^\/+|\/+$/g,''))};
@@ -224,6 +224,11 @@ document.onkeydown=e=>{if($('#lb').hidden){if(e.key=='/'&&!/INPUT|SELECT/.test(e
 let th='auto';try{th=localStorage.getItem('th')||'auto'}catch(e){}
 const ap=()=>{document.documentElement.dataset.theme=th;$('#theme').textContent={auto:'◐',light:'☀',dark:'☾'}[th]};
 $('#theme').onclick=()=>{th={auto:'light',light:'dark',dark:'auto'}[th];try{localStorage.setItem('th',th)}catch(e){}ap()};
-ap();load();
+function go(p,m='folder',push=true){cur=p;mode=m;$('#q').value='';sel.clear();
+  if(push){const h=m=='all'?'#all':'#/'+p.split('/').filter(Boolean).map(encodeURIComponent).join('/');if(location.hash!==h)history[push==='r'?'replaceState':'pushState'](null,'',h)}
+  render()}
+function fromHash(){const h=location.hash;if(h=='#all')return['','all'];if(h.startsWith('#/'))return[h.slice(2).split('/').filter(Boolean).map(decodeURIComponent).join('/'),'folder'];return['','folder']}
+window.onpopstate=()=>{const[p,m]=fromHash();go(p,m,false)};
+[cur,mode]=fromHash();ap();load();
 </script>
 </html>
