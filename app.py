@@ -2,9 +2,10 @@
 Folders = a caption tag "📁 path/to/folder" on each file (+ a text marker message for empty folders).
 Env: API_ID, API_HASH, CHANNEL_ID (e.g. -1001234567890). Optional: APP_PASSWORD, HOST.
 """
-import os, json, requests, base64, hmac, mimetypes, shutil, tempfile, asyncio
+import os, re, json, zipfile, requests, base64, hmac, mimetypes, shutil, tempfile, asyncio
 from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException
 from fastapi.responses import FileResponse, Response, StreamingResponse
+from urllib.parse import quote
 from telethon import TelegramClient, events
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -213,8 +214,71 @@ async def file(mid: int, request: Request):
 
     hdr = {"Accept-Ranges": "bytes", "Content-Length": str(end - start + 1),
            "Content-Range": f"bytes {start}-{end}/{size}"}
+    if request.query_params.get("dl"):
+        hdr["Content-Disposition"] = "attachment; filename*=UTF-8''" + quote(m.file.name or f"{m.id}{m.file.ext or ''}")
     return StreamingResponse(gen(), status_code=status, headers=hdr,
                              media_type=m.file.mime_type or "application/octet-stream")
+
+
+class Sink:                              # lets zipfile write to a stream that cannot seek
+    def __init__(self): self.buf, self.pos = bytearray(), 0
+    def write(self, b): self.buf += b; self.pos += len(b); return len(b)
+    def flush(self): pass
+    def tell(self): return self.pos
+
+
+def safe(n):
+    return re.sub(r'[\\/:*?"<>|]+', "_", n).strip() or "file"
+
+
+@app.post("/api/zip")
+async def zip_dl(request: Request):
+    form = await request.form()
+    folder = (form.get("folder") or "").strip("/ ")
+    ids = [int(x) for x in (form.get("ids") or "").split(",") if x]
+    byid = {i["id"]: i for i in await items() if i["kind"] != "folder"}
+    sel = [i for i in byid.values() if i["folder"] == folder or i["folder"].startswith(folder + "/")] if folder \
+        else [byid[i] for i in ids if i in byid]
+    if not sel:
+        raise HTTPException(404, "Nothing to download")
+    root = safe(folder.split("/")[-1]) if folder else "Drive selection"
+    used, entries = set(), []
+    for it in sel:
+        rel = it["folder"][len(folder):].strip("/") if folder else ""
+        parts = ([root] if folder else []) + [safe(x) for x in rel.split("/") if x]
+        base = safe(it["name"]); name, n = base, 1
+        while "/".join(parts + [name]) in used:        # keep duplicate file names apart
+            n += 1
+            stem, ext = os.path.splitext(base)
+            name = f"{stem} ({n}){ext}"
+        path = "/".join(parts + [name]); used.add(path)
+        entries.append((path, it["id"]))
+
+    async def gen():
+        sink = Sink()
+        zf = zipfile.ZipFile(sink, "w", zipfile.ZIP_STORED, allowZip64=True)   # photos/videos are already compressed
+        msgs = {}
+        for i in range(0, len(entries), 100):
+            for m in await client.get_messages(ent, ids=[e[1] for e in entries[i:i + 100]]):
+                if m and m.media:
+                    msgs[m.id] = m
+        for path, mid in entries:
+            m = msgs.get(mid)
+            if not m:
+                continue
+            zi = zipfile.ZipInfo(path, date_time=m.date.timetuple()[:6])
+            zi.compress_type = zipfile.ZIP_STORED
+            with zf.open(zi, "w", force_zip64=True) as w:
+                async for ch in client.iter_download(m.media, request_size=512 * 1024):
+                    w.write(ch)
+                    if sink.buf:
+                        yield bytes(sink.buf)
+                        sink.buf.clear()
+        zf.close()
+        yield bytes(sink.buf)
+
+    return StreamingResponse(gen(), media_type="application/zip",
+                             headers={"Content-Disposition": "attachment; filename*=UTF-8''" + quote(root + ".zip")})
 
 
 @app.post("/api/move")
