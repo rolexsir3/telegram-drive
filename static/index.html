@@ -101,6 +101,9 @@ input[type=range]{width:100px;accent-color:var(--a2)}input[type=checkbox]{accent
 #lb button:hover{background:#ffffff40;transform:none;box-shadow:none}#pv,#nx{top:50%;margin-top:-24px}
 #lbi{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:18px;align-items:center;max-width:92vw;padding:10px 20px;border-radius:99px;background:#ffffff1c;backdrop-filter:blur(14px);border:1px solid #fff2;color:#fff;font-size:14px;white-space:nowrap}
 #lbi b{overflow:hidden;text-overflow:ellipsis;max-width:40vw}#lbi span{opacity:.7}#lbi a{color:#fff;font-weight:700;text-decoration:none}
+.dl,.fdl{position:absolute;top:10px;right:10px;z-index:2;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#0006;backdrop-filter:blur(8px);border:1px solid #fff3;color:#fff;font-size:14px;font-style:normal;text-decoration:none;opacity:0;transform:scale(.85);transition:.2s;cursor:pointer}
+.tile:hover .dl,.tile:hover .fdl{opacity:1;transform:none}.dl:hover,.fdl:hover{background:var(--grad);border-color:transparent}
+.lrow .dl{position:static;flex:none;opacity:1;transform:none;color:var(--mut);background:var(--line);border:0}
 @media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
 @media(max-width:700px){body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);padding:10px;gap:10px}
  aside{flex-direction:row;padding:8px;border-radius:20px}aside h1,#sum{display:none}#tree{display:flex;gap:6px;overflow-x:auto}
@@ -121,11 +124,11 @@ input[type=range]{width:100px;accent-color:var(--a2)}input[type=checkbox]{accent
     <input id="zoom" type="range" min="110" max="320" value="190" title="Thumbnail size">
     <div class="seg"><button id="v-grid" class="on" title="Gallery">▦</button><button id="v-list" title="List">☰</button></div>
     <span id="fcol"></span>
-    <button id="newf">New folder</button><button id="renf">Rename</button><button id="delf">Delete folder</button>
+    <button id="newf">New folder</button><button id="dlf">⬇ Download folder</button><button id="renf">Rename</button><button id="delf">Delete folder</button>
   </header>
   <div id="grid"></div>
 </main>
-<div id="bulk" hidden><span><span id="bn">0</span> selected</span><button id="b-all">Select all</button><button id="b-mv">Move…</button><button id="b-rm" style="color:#e5484d">Delete</button><button id="b-x">✕</button></div>
+<div id="bulk" hidden><span><span id="bn">0</span> selected</span><button id="b-all">Select all</button><button id="b-dl">⬇ Download</button><button id="b-mv">Move…</button><button id="b-rm" style="color:#e5484d">Delete</button><button id="b-x">✕</button></div>
 <div id="ups" hidden><div class="uh"><span>Uploads</span><button id="ux">✕</button></div><div class="ul"></div></div>
 <div id="toasts"></div>
 <div id="dz"><div>Drop to upload<small id="dzf"></small></div></div>
@@ -151,15 +154,15 @@ function render(){
   $('#m-folder').classList.toggle('on',mode=='folder');$('#m-all').classList.toggle('on',mode=='all');
   $('#v-grid').classList.toggle('on',!list);$('#v-list').classList.toggle('on',list);
   document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f==filter));
-  const fv=mode=='all'||!cur;$('#delf').hidden=$('#renf').hidden=$('#fcol').hidden=fv;
+  const fv=mode=='all'||!cur;$('#dlf').hidden=$('#delf').hidden=$('#renf').hidden=$('#fcol').hidden=fv;
   $('#fcol').innerHTML=COLS.map(c=>`<i data-col="${c}" style="background:${c}"></i>`).join('')+'<i data-col="" title="Reset">×</i>';
   const q=($('#q').value||'').trim().toLowerCase(),subs=new Set();
   if(mode=='folder'&&!q)items.forEach(i=>{const f=i.folder;if(f&&(!cur||f.startsWith(cur+'/'))){const r=cur?f.slice(cur.length+1):f;if(r)subs.add(r.split('/')[0])}});
   view=items.filter(i=>i.kind!='folder'&&(q?(i.name.toLowerCase().includes(q)||i.folder.toLowerCase().includes(q)):(mode=='all'||i.folder===cur))&&(filter=='all'||i.kind==filter)).sort(S[sort]);
   const fl=q?[...paths].filter(p=>p.toLowerCase().includes(q)).sort():[...subs].sort().map(s=>cur?cur+'/'+s:s);
-  const fo=fl.length?'<div class="fgrid">'+fl.map(p=>`<div class="tile folder" data-go="${esc(p)}" style="--fc:${colorOf(p)}">${FI}<span>${esc(q?p:p.split('/').pop())}</span><small>${cnt[p]||0} items</small></div>`).join('')+'</div>':'';
-  const tile=(m,i)=>`<div class="tile${m.kind=='file'?'':' sk'}${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true" style="--r:${Math.min(2.2,Math.max(.5,m.w&&m.h?m.w/m.h:1))}"><i class="chk" data-sel="${m.id}">✓</i>${m.kind=='file'?`<div class="ph">${esc(m.name)}</div>`:`<img src="/api/thumb/${m.id}" alt="" loading="lazy" onload="this.classList.add('in');this.parentNode.classList.remove('sk')" onerror="this.parentNode.classList.remove('sk')">`}${m.kind=='video'?'<b class="play">▶</b>':''}<div class="cap"><b>${esc((mode=='all'&&m.folder?m.folder+' / ':'')+m.name)}</b><small>${fmt(m.size)}</small></div></div>`;
-  const lrow=(m,i)=>`<div class="lrow${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true"><i class="chk" data-sel="${m.id}">✓</i>${m.kind=='file'?'<span class="lt">📄</span>':`<img class="lt" src="/api/thumb/${m.id}" alt="" loading="lazy">`}<span class="ln">${esc(m.name)}</span><span class="lf">${esc(m.folder||'Home')}</span><span class="ls">${fmt(m.size)}</span><span class="lda">${new Date(m.date).toLocaleDateString()}</span></div>`;
+  const fo=fl.length?'<div class="fgrid">'+fl.map(p=>`<div class="tile folder" data-go="${esc(p)}" style="--fc:${colorOf(p)}"><i class="fdl" data-dlf="${esc(p)}" title="Download folder as zip">⬇</i>${FI}<span>${esc(q?p:p.split('/').pop())}</span><small>${cnt[p]||0} items</small></div>`).join('')+'</div>':'';
+  const tile=(m,i)=>`<div class="tile${m.kind=='file'?'':' sk'}${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true" style="--r:${Math.min(2.2,Math.max(.5,m.w&&m.h?m.w/m.h:1))}"><i class="chk" data-sel="${m.id}">✓</i><a class="dl" href="/api/file/${m.id}?dl=1" download title="Download">⬇</a>${m.kind=='file'?`<div class="ph">${esc(m.name)}</div>`:`<img src="/api/thumb/${m.id}" alt="" loading="lazy" onload="this.classList.add('in');this.parentNode.classList.remove('sk')" onerror="this.parentNode.classList.remove('sk')">`}${m.kind=='video'?'<b class="play">▶</b>':''}<div class="cap"><b>${esc((mode=='all'&&m.folder?m.folder+' / ':'')+m.name)}</b><small>${fmt(m.size)}</small></div></div>`;
+  const lrow=(m,i)=>`<div class="lrow${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true"><i class="chk" data-sel="${m.id}">✓</i>${m.kind=='file'?'<span class="lt">📄</span>':`<img class="lt" src="/api/thumb/${m.id}" alt="" loading="lazy">`}<span class="ln">${esc(m.name)}</span><span class="lf">${esc(m.folder||'Home')}</span><span class="ls">${fmt(m.size)}</span><span class="lda">${new Date(m.date).toLocaleDateString()}</span><a class="dl" href="/api/file/${m.id}?dl=1" download title="Download">⬇</a></div>`;
   let body='';
   if(list)body='<div class="lst">'+view.map(lrow).join('')+'</div>';
   else{const grp=sort=='new'||sort=='old';let last=null,open=false;
@@ -173,7 +176,7 @@ async function moveIds(ids,dest){toast(`Moving ${ids.length}…`);await api('/ap
 async function setColor(c){if(c)colors[cur]=c;else delete colors[cur];await api('/api/colors',{folder:cur,color:c});render()}
 document.body.addEventListener('click',e=>{
   const T=s=>e.target.closest(s),c=T('[data-sel]'),col=T('[data-col]'),g=T('[data-go]'),f=T('[data-f]'),t=T('[data-i]');
-  if(c)tog(+c.dataset.sel);
+  if(T('.dl'))return;const d=T('[data-dlf]');if(d)post({folder:d.dataset.dlf});else if(c)tog(+c.dataset.sel);
   else if(col)setColor(col.dataset.col);
   else if(g){go(g.dataset.go)}
   else if(f){filter=f.dataset.f;render()}
@@ -196,6 +199,11 @@ $('#b-x').onclick=()=>{sel.clear();render()};
 $('#b-all').onclick=()=>{view.forEach(m=>sel.add(m.id));render()};
 $('#b-mv').onclick=()=>{const to=prompt('Move to folder (blank = Home):',cur);if(to!==null)moveIds([...sel],to.trim().replace(/^\/+|\/+$/g,''))};
 $('#b-rm').onclick=async()=>{if(confirm(`Delete ${sel.size} item(s) from the channel?`)){const ids=[...sel];sel.clear();await api('/api/delete',{ids});toast('Deleted');load()}};
+function post(fields){const f=document.createElement('form');f.method='post';f.action='/api/zip';
+  for(const k in fields){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=fields[k];f.appendChild(i)}
+  document.body.appendChild(f);f.submit();f.remove();toast('Preparing download…')}
+$('#dlf').onclick=()=>post({folder:cur});
+$('#b-dl').onclick=()=>{const ids=[...sel];if(ids.length==1){const a=document.createElement('a');a.href='/api/file/'+ids[0]+'?dl=1';a.download='';document.body.appendChild(a);a.click();a.remove()}else post({ids:ids.join(',')})};
 function up(files,dest=cur){
   const l=[...files];if(!l.length)return;const box=$('#ups'),ul=box.querySelector('.ul'),orig=$('#orig').checked;
   if(!active)ul.innerHTML='';box.hidden=false;active+=l.length;
@@ -217,7 +225,7 @@ document.addEventListener('dragleave',e=>{if(!e.relatedTarget)clr()});document.a
 document.addEventListener('drop',e=>{e.preventDefault();clr();const t=e.target.closest('[data-go]'),dest=t?t.dataset.go:cur,raw=e.dataTransfer.getData('text/x-ids');
   if(raw){if(t)moveIds(JSON.parse(raw),dest)}else if(e.dataTransfer.files.length)up(e.dataTransfer.files,dest)});
 function show(i){li=(i+view.length)%view.length;const m=view[li];if(m.kind=='file'){location='/api/file/'+m.id;return}
-  $('#lb').hidden=false;$('#lbi').innerHTML=`<b>${esc(m.name)}</b><span>${li+1} / ${view.length}</span><a href="/api/file/${m.id}" download="${esc(m.name)}">⬇ Download</a>`;$('#lbc').innerHTML=m.kind=='video'?`<video src="/api/file/${m.id}" controls autoplay></video>`:`<img src="/api/file/${m.id}" alt="">`}
+  $('#lb').hidden=false;$('#lbi').innerHTML=`<b>${esc(m.name)}</b><span>${li+1} / ${view.length}</span><a href="/api/file/${m.id}?dl=1" download="${esc(m.name)}">⬇ Download</a>`;$('#lbc').innerHTML=m.kind=='video'?`<video src="/api/file/${m.id}" controls autoplay></video>`:`<img src="/api/file/${m.id}" alt="">`}
 const close=()=>{$('#lb').hidden=true;$('#lbc').innerHTML=''};
 $('#x').onclick=close;$('#pv').onclick=()=>show(li-1);$('#nx').onclick=()=>show(li+1);
 document.onkeydown=e=>{if($('#lb').hidden){if(e.key=='/'&&!/INPUT|SELECT/.test(e.target.tagName)){e.preventDefault();$('#q').focus()}if(e.key=='Escape'&&sel.size){sel.clear();render()}return}if(e.key=='Escape')close();if(e.key=='ArrowLeft')show(li-1);if(e.key=='ArrowRight')show(li+1)};
