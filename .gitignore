@@ -1,8 +1,10 @@
-   venv/
-   __pycache__/
-   *.session
-   *.session-journal
-   thumbs/
-   colors.json
-   bot_state.json
-   .env
+venv/
+__pycache__/
+*.session
+*.session-journal
+thumbs/
+colors.json
+bot_state.json
+drive.db
+drive.db-journal
+.env
