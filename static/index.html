@@ -104,25 +104,17 @@ input[type=range]{width:100px;accent-color:var(--a2)}input[type=checkbox]{accent
 .dl,.fdl{position:absolute;top:10px;right:10px;z-index:2;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#0006;backdrop-filter:blur(8px);border:1px solid #fff3;color:#fff;font-size:14px;font-style:normal;text-decoration:none;opacity:0;transform:scale(.85);transition:.2s;cursor:pointer}
 .tile:hover .dl,.tile:hover .fdl{opacity:1;transform:none}.dl:hover,.fdl:hover{background:var(--grad);border-color:transparent}
 .lrow .dl{position:static;flex:none;opacity:1;transform:none;color:var(--mut);background:var(--line);border:0}
-.lk{margin-top:8px}.lk a::before{display:none}#tn{font-size:12px;color:var(--mut);margin-left:4px}
-.bkp{margin-top:10px;font-size:12px;font-weight:700;color:#16a34a}.bkp.bad{color:#ef4458}
-.toast button{margin-left:14px;padding:3px 12px;border:0;color:var(--ink);background:var(--bg);font-size:13px}
-#shm{position:fixed;inset:0;z-index:35;display:grid;place-items:center;background:rgba(6,8,22,.6);backdrop-filter:blur(8px)}
-#shm .card{width:min(420px,92vw);padding:24px;border-radius:24px;background:var(--solid);border:1px solid var(--line);box-shadow:0 30px 70px -20px rgba(40,30,120,.5)}
-#shm h3{margin:0 0 4px;font:800 18px Sora,sans-serif}#shm p{margin:0 0 14px;color:var(--mut);font-size:13px}#shm select{width:100%;padding:10px 14px;border-radius:14px}
-#shr{display:flex;gap:8px;margin-top:12px}#shr input{flex:1;min-width:0;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
-#shm .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 @media(prefers-reduced-motion:reduce){*,::before,::after{animation:none!important;transition:none!important}}
 @media(max-width:700px){body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);padding:10px;gap:10px}
  aside{flex-direction:row;padding:8px;border-radius:20px}aside h1,#sum{display:none}#tree{display:flex;gap:6px;overflow-x:auto}
  aside a{flex:none;margin:0;padding:8px 14px!important}header{padding:10px 12px}#q{flex-basis:100%;max-width:none;order:9}.lf,.lda{display:none}#ups{left:12px;right:12px;width:auto}}
 </style>
-<aside><h1><span class="logo">☁</span><span class="bt">Channel Drive</span></h1><div id="tree"></div><div class="lk"><a id="lk-trash">🗑 Trash <b id="tn"></b></a><a id="lk-shares">🔗 Shared links</a></div><div id="sum"></div></aside>
+<aside><h1><span class="logo">☁</span><span class="bt">Channel Drive</span></h1><div id="tree"></div><div id="sum"></div></aside>
 <main>
   <header>
     <div class="crumbs" id="crumbs"></div>
     <input id="q" type="search" placeholder="Search folders & files   ( / )">
-    <button id="refresh" title="Refresh">↻</button><button id="theme" title="Theme">◐</button><button id="lo" title="Log out">⎋</button>
+    <button id="refresh" title="Refresh">↻</button><button id="theme" title="Theme">◐</button>
     <label class="btn pri">Upload<input id="file" type="file" multiple hidden accept="image/*,video/*"></label>
     <label class="o"><input id="orig" type="checkbox" checked> Original quality</label>
     <div class="brk"></div>
@@ -132,44 +124,42 @@ input[type=range]{width:100px;accent-color:var(--a2)}input[type=checkbox]{accent
     <input id="zoom" type="range" min="110" max="320" value="190" title="Thumbnail size">
     <div class="seg"><button id="v-grid" class="on" title="Gallery">▦</button><button id="v-list" title="List">☰</button></div>
     <span id="fcol"></span>
-    <button id="newf">New folder</button><button id="dlf">⬇ Download folder</button><button id="shf">🔗 Share folder</button><button id="etrash">Empty trash</button><button id="renf">Rename</button><button id="delf">Delete folder</button>
+    <button id="newf">New folder</button><button id="dlf">⬇ Download folder</button><button id="renf">Rename</button><button id="delf">Delete folder</button>
   </header>
   <div id="grid"></div>
 </main>
-<div id="bulk" hidden><span><span id="bn">0</span> selected</span><button id="b-all">Select all</button><button id="b-dl">⬇ Download</button><button id="b-mv">Move…</button><button id="b-sh">🔗 Share</button><button id="b-rs">Restore</button><button id="b-rm" style="color:#e5484d">Move to Trash</button><button id="b-x">✕</button></div>
+<div id="bulk" hidden><span><span id="bn">0</span> selected</span><button id="b-all">Select all</button><button id="b-dl">⬇ Download</button><button id="b-mv">Move…</button><button id="b-rm" style="color:#e5484d">Delete</button><button id="b-x">✕</button></div>
 <div id="ups" hidden><div class="uh"><span>Uploads</span><button id="ux">✕</button></div><div class="ul"></div></div>
-<div id="shm" hidden><div class="card"><h3>Create share link</h3><p id="shw"></p><select id="shd"><option value="1">Expires in 1 day</option><option value="7" selected>Expires in 7 days</option><option value="30">Expires in 30 days</option><option value="0">Never expires</option></select><div id="shr"></div><div class="acts"><button id="shx">Close</button><button class="pri" id="shgo">Create link</button></div></div></div>
 <div id="toasts"></div>
 <div id="dz"><div>Drop to upload<small id="dzf"></small></div></div>
 <div id="lb" hidden><div id="lbc"></div><div id="lbi"></div><button id="x" style="top:14px;right:16px">✕</button><button id="pv" style="left:14px">‹</button><button id="nx" style="right:14px">›</button></div>
 <script>
-const _f=window.fetch;window.fetch=async(...a)=>{const r=await _f(...a);if(r.status==401)location='/login';return r};
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let items=[],trash=[],shares=[],bk={on:false},colors={},cur="",mode="folder",filter="all",sort="new",list=false,zoom=190,view=[],li=0,active=0;const sel=new Set();
+let items=[],colors={},cur="",mode="folder",filter="all",sort="new",list=false,zoom=190,view=[],li=0,active=0;const sel=new Set();
 const COLS=['#5b8def','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444'];
 const FI='<svg class="fi" viewBox="0 0 64 52"><path d="M4 10a6 6 0 0 1 6-6h14l6 7h24a6 6 0 0 1 6 6v27a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="var(--fc)" opacity=".55"/><path d="M4 20a6 6 0 0 1 6-6h44a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6z" fill="var(--fc)"/></svg>';
 const S={new:(a,b)=>b.date.localeCompare(a.date),old:(a,b)=>a.date.localeCompare(b.date),name:(a,b)=>a.name.localeCompare(b.name),size:(a,b)=>(b.size||0)-(a.size||0)};
 const api=(u,d)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
 const fmt=n=>{n=n||0;const u=['B','KB','MB','GB','TB'];let i=0;while(n>=1024&&i<4){n/=1024;i++}return(i?n.toFixed(1):n)+' '+u[i]};
 const colorOf=p=>{while(p){if(colors[p])return colors[p];p=p.includes('/')?p.slice(0,p.lastIndexOf('/')):''}return'#5b8def'};
-function toast(t,a,fn){const e=document.createElement('div');e.className='toast';e.textContent=t;if(a){const b=document.createElement('button');b.textContent=a;b.onclick=()=>{fn();e.remove()};e.appendChild(b)}$('#toasts').appendChild(e);setTimeout(()=>e.remove(),a?9000:3200)}
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;$('#toasts').appendChild(e);setTimeout(()=>e.remove(),3200)}
 function label(s){const d=new Date(s),n=new Date(),k=Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);return k<=0?'Today':k==1?'Yesterday':k<7?'This week':d.toLocaleDateString(undefined,{month:'long',year:'numeric'})}
-async function load(){const j=u=>fetch(u).then(r=>r.json());[items,colors,trash,shares,bk]=await Promise.all([j('/api/items'),j('/api/colors'),j('/api/trash'),j('/api/shares'),j('/api/backup')]);render()}
+async function load(){[items,colors]=await Promise.all([fetch('/api/items').then(r=>r.json()),fetch('/api/colors').then(r=>r.json())]);render()}
 function render(){
   const paths=new Set(),cnt={};let ph=0,vd=0,sz=0;
   items.forEach(i=>{if(i.folder){let p="";i.folder.split("/").forEach(s=>{p+=(p?"/":"")+s;paths.add(p);if(i.kind!='folder')cnt[p]=(cnt[p]||0)+1})}if(i.kind!='folder'){i.kind=='video'?vd++:ph++;sz+=i.size||0}});
-  const tot=ph+vd||1;$('#sum').innerHTML=`<div class="sx"><b>${fmt(sz)}</b><span>${ph+vd} files stored</span></div><div class="bar2"><i style="width:${ph/tot*100}%"></i><i style="width:${vd/tot*100}%"></i></div><div class="lg"><span><s class="d1"></s>${ph} photos</span><span><s class="d2"></s>${vd} videos</span></div>${bk.on?`<div class="bkp${bk.err?' bad':''}">☁ Backup ${bk.done}/${bk.total}${bk.err?' · problem':' ✓'}</div>`:''}`;
+  const tot=ph+vd||1;$('#sum').innerHTML=`<div class="sx"><b>${fmt(sz)}</b><span>${ph+vd} files stored</span></div><div class="bar2"><i style="width:${ph/tot*100}%"></i><i style="width:${vd/tot*100}%"></i></div><div class="lg"><span><s class="d1"></s>${ph} photos</span><span><s class="d2"></s>${vd} videos</span></div>`;
   $('#tree').innerHTML=`<a data-go="" class="${!cur&&mode=='folder'?'on':''}">Home</a>`+[...paths].sort().map(p=>`<a data-go="${esc(p)}" style="--fc:${colorOf(p)};padding-left:${12*p.split('/').length}px" class="${p===cur&&mode=='folder'?'on':''}">${esc(p.split('/').pop())}</a>`).join('');
-  let acc="";$('#crumbs').innerHTML={all:'All media',trash:'Trash <small>(emptied after 30 days)</small>',shares:'Shared links'}[mode]||`<a data-go="">Home</a>`+cur.split('/').filter(Boolean).map(s=>{acc+=(acc?'/':'')+s;return` / <a data-go="${esc(acc)}">${esc(s)}</a>`}).join('');
-  $('#m-folder').classList.toggle('on',mode=='folder');$('#m-all').classList.toggle('on',mode=='all');$('#lk-trash').classList.toggle('on',mode=='trash');$('#lk-shares').classList.toggle('on',mode=='shares');$('#tn').textContent=trash.length||'';$('#etrash').hidden=mode!='trash';
+  let acc="";$('#crumbs').innerHTML=mode=='all'?'All media':`<a data-go="">Home</a>`+cur.split('/').filter(Boolean).map(s=>{acc+=(acc?'/':'')+s;return` / <a data-go="${esc(acc)}">${esc(s)}</a>`}).join('');
+  $('#m-folder').classList.toggle('on',mode=='folder');$('#m-all').classList.toggle('on',mode=='all');
   $('#v-grid').classList.toggle('on',!list);$('#v-list').classList.toggle('on',list);
   document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f==filter));
-  const fv=mode!='folder'||!cur;$('#shf').hidden=fv;$('#dlf').hidden=$('#delf').hidden=$('#renf').hidden=$('#fcol').hidden=fv;
+  const fv=mode=='all'||!cur;$('#dlf').hidden=$('#delf').hidden=$('#renf').hidden=$('#fcol').hidden=fv;
   $('#fcol').innerHTML=COLS.map(c=>`<i data-col="${c}" style="background:${c}"></i>`).join('')+'<i data-col="" title="Reset">×</i>';
   const q=($('#q').value||'').trim().toLowerCase(),subs=new Set();
   if(mode=='folder'&&!q)items.forEach(i=>{const f=i.folder;if(f&&(!cur||f.startsWith(cur+'/'))){const r=cur?f.slice(cur.length+1):f;if(r)subs.add(r.split('/')[0])}});
-  view=(mode=='trash'?trash:items).filter(i=>i.kind!='folder'&&(q?(i.name.toLowerCase().includes(q)||i.folder.toLowerCase().includes(q)):(mode!='folder'||i.folder===cur))&&(filter=='all'||i.kind==filter)).sort(S[sort]);
-  const fl=(mode=='trash'||mode=='shares')?[]:q?[...paths].filter(p=>p.toLowerCase().includes(q)).sort():[...subs].sort().map(s=>cur?cur+'/'+s:s);
+  view=items.filter(i=>i.kind!='folder'&&(q?(i.name.toLowerCase().includes(q)||i.folder.toLowerCase().includes(q)):(mode=='all'||i.folder===cur))&&(filter=='all'||i.kind==filter)).sort(S[sort]);
+  const fl=q?[...paths].filter(p=>p.toLowerCase().includes(q)).sort():[...subs].sort().map(s=>cur?cur+'/'+s:s);
   const fo=fl.length?'<div class="fgrid">'+fl.map(p=>`<div class="tile folder" data-go="${esc(p)}" style="--fc:${colorOf(p)}"><i class="fdl" data-dlf="${esc(p)}" title="Download folder as zip">⬇</i>${FI}<span>${esc(q?p:p.split('/').pop())}</span><small>${cnt[p]||0} items</small></div>`).join('')+'</div>':'';
   const tile=(m,i)=>`<div class="tile${m.kind=='file'?'':' sk'}${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true" style="--r:${Math.min(2.2,Math.max(.5,m.w&&m.h?m.w/m.h:1))}"><i class="chk" data-sel="${m.id}">✓</i><a class="dl" href="/api/file/${m.id}?dl=1" download title="Download">⬇</a>${m.kind=='file'?`<div class="ph">${esc(m.name)}</div>`:`<img src="/api/thumb/${m.id}" alt="" loading="lazy" onload="this.classList.add('in');this.parentNode.classList.remove('sk')" onerror="this.parentNode.classList.remove('sk')">`}${m.kind=='video'?'<b class="play">▶</b>':''}<div class="cap"><b>${esc((mode=='all'&&m.folder?m.folder+' / ':'')+m.name)}</b><small>${fmt(m.size)}</small></div></div>`;
   const lrow=(m,i)=>`<div class="lrow${sel.has(m.id)?' sel':''}" data-i="${i}" draggable="true"><i class="chk" data-sel="${m.id}">✓</i>${m.kind=='file'?'<span class="lt">📄</span>':`<img class="lt" src="/api/thumb/${m.id}" alt="" loading="lazy">`}<span class="ln">${esc(m.name)}</span><span class="lf">${esc(m.folder||'Home')}</span><span class="ls">${fmt(m.size)}</span><span class="lda">${new Date(m.date).toLocaleDateString()}</span><a class="dl" href="/api/file/${m.id}?dl=1" download title="Download">⬇</a></div>`;
@@ -177,16 +167,16 @@ function render(){
   if(list)body='<div class="lst">'+view.map(lrow).join('')+'</div>';
   else{const grp=sort=='new'||sort=='old';let last=null,open=false;
     view.forEach((m,i)=>{const g=grp?label(m.date):'';if(i==0||g!==last){if(open)body+='</div>';body+=(g?`<h3 class="gh">${g}</h3>`:'')+`<div class="row" style="--h:${zoom}px">`;open=true;last=g}body+=tile(m,i)});if(open)body+='</div>'}
-  if(mode=='shares'){view=[];body=sharesHtml()}$('#grid').innerHTML=(fo+body)||'<div class="empty"><h2>Nothing here yet</h2>Drop photos or videos anywhere, or create a folder.</div>';
+  $('#grid').innerHTML=(fo+body)||'<div class="empty"><h2>Nothing here yet</h2>Drop photos or videos anywhere, or create a folder.</div>';
   syncBulk();
 }
-function syncBulk(){document.body.classList.toggle('selecting',sel.size>0);$('#bulk').hidden=!sel.size;$('#bn').textContent=sel.size;const t=mode=='trash';['#b-dl','#b-sh','#b-mv'].forEach(s=>$(s).hidden=t);$('#b-rs').hidden=!t;$('#b-rm').textContent=t?'Delete forever':'Move to Trash'}
+function syncBulk(){document.body.classList.toggle('selecting',sel.size>0);$('#bulk').hidden=!sel.size;$('#bn').textContent=sel.size}
 function tog(id){sel.has(id)?sel.delete(id):sel.add(id);document.querySelectorAll(`[data-sel="${id}"]`).forEach(c=>c.parentNode.classList.toggle('sel',sel.has(id)));syncBulk()}
 async function moveIds(ids,dest){toast(`Moving ${ids.length}…`);await api('/api/move',{ids,folder:dest});sel.clear();toast(`Moved to ${dest||'Home'}`);load()}
 async function setColor(c){if(c)colors[cur]=c;else delete colors[cur];await api('/api/colors',{folder:cur,color:c});render()}
 document.body.addEventListener('click',e=>{
   const T=s=>e.target.closest(s),c=T('[data-sel]'),col=T('[data-col]'),g=T('[data-go]'),f=T('[data-f]'),t=T('[data-i]');
-  if(T('.dl'))return;const cp=T('[data-cp]'),rv=T('[data-rv]');if(cp){navigator.clipboard.writeText(location.origin+'/s/'+cp.dataset.cp).then(()=>toast('Link copied'));return}if(rv){api('/api/share/revoke',{token:rv.dataset.rv}).then(()=>{toast('Link revoked');load()});return}const d=T('[data-dlf]');if(d)post({folder:d.dataset.dlf});else if(c)tog(+c.dataset.sel);
+  if(T('.dl'))return;const d=T('[data-dlf]');if(d)post({folder:d.dataset.dlf});else if(c)tog(+c.dataset.sel);
   else if(col)setColor(col.dataset.col);
   else if(g){go(g.dataset.go)}
   else if(f){filter=f.dataset.f;render()}
@@ -198,7 +188,7 @@ $('#m-folder').onclick=()=>go(cur);$('#m-all').onclick=()=>go(cur,'all');
 $('#v-grid').onclick=()=>{list=false;render()};$('#v-list').onclick=()=>{list=true;render()};
 $('#newf').onclick=async()=>{const n=prompt('Folder name:');if(n){await api('/api/folder',{name:(cur?cur+'/':'')+n.replace(/^\/+|\/+$/g,'')});toast('Folder created');load()}};
 $('#delf').onclick=async()=>{const ids=items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).map(i=>i.id);
-  if(confirm(`Move "${cur}" and its ${ids.length} items to Trash?`)){await api('/api/delete',{ids});go(cur.split('/').slice(0,-1).join('/'),'folder','r');toast('Folder moved to Trash','Undo',async()=>{await api('/api/restore',{ids});toast('Restored');load()});load()}};
+  if(confirm(`Delete "${cur}" and its ${ids.length} items from the channel?`)){await api('/api/delete',{ids});go(cur.split('/').slice(0,-1).join('/'),'folder','r');toast('Folder deleted');load()}};
 $('#renf').onclick=async()=>{const leaf=cur.split('/').pop(),n=prompt('Rename folder:',leaf);if(!n||n===leaf)return;
   const np=(cur.includes('/')?cur.slice(0,cur.lastIndexOf('/'))+'/':'')+n.replace(/\//g,'-'),gp={};
   items.filter(i=>i.folder===cur||i.folder.startsWith(cur+'/')).forEach(i=>{const t=np+i.folder.slice(cur.length);(gp[t]=gp[t]||[]).push(i.id)});
@@ -208,23 +198,7 @@ $('#renf').onclick=async()=>{const leaf=cur.split('/').pop(),n=prompt('Rename fo
 $('#b-x').onclick=()=>{sel.clear();render()};
 $('#b-all').onclick=()=>{view.forEach(m=>sel.add(m.id));render()};
 $('#b-mv').onclick=()=>{const to=prompt('Move to folder (blank = Home):',cur);if(to!==null)moveIds([...sel],to.trim().replace(/^\/+|\/+$/g,''))};
-$('#b-rm').onclick=()=>trashIds([...sel]);
-const sharesHtml=()=>shares.length?'<div class="lst">'+shares.map(s=>`<div class="lrow"><span class="lt">🔗</span><span class="ln">${esc(s.name)}<br><small style="color:var(--mut)">${s.kind=='folder'?'Folder':'Files'} · ${s.hits} views · ${s.expires?(s.expires*1000<Date.now()?'Expired':'Expires '+new Date(s.expires*1000).toLocaleDateString()):'Never expires'}</small></span><button data-cp="${s.token}">Copy link</button><button data-rv="${s.token}" style="color:#ef4458">Revoke</button></div>`).join('')+'</div>':'<div class="empty"><h2>No shared links</h2>Select files or open a folder and press Share.</div>';
-async function trashIds(ids){
-  if(mode=='trash'){if(!confirm(`Permanently delete ${ids.length} item(s)? This cannot be undone.`))return;sel.clear();await api('/api/purge',{ids});toast('Deleted forever');return load()}
-  sel.clear();await api('/api/delete',{ids});toast(`Moved ${ids.length} to Trash`,'Undo',async()=>{await api('/api/restore',{ids});toast('Restored');load()});load()}
-$('#b-rs').onclick=async()=>{const ids=[...sel];sel.clear();await api('/api/restore',{ids});toast('Restored');load()};
-$('#etrash').onclick=async()=>{if(confirm('Permanently delete everything in Trash?')){await api('/api/purge',{all:true});toast('Trash emptied');load()}};
-$('#lk-trash').onclick=()=>go('','trash');$('#lk-shares').onclick=()=>go('','shares');
-$('#lo').onclick=async()=>{await fetch('/logout',{method:'POST'});location='/login'};
-let shArg=null;
-function openShare(a,label){shArg=a;$('#shw').textContent=label;$('#shr').innerHTML='';$('#shgo').hidden=false;$('#shd').hidden=false;$('#shm').hidden=false}
-$('#shx').onclick=()=>$('#shm').hidden=true;
-$('#shgo').onclick=async()=>{const r=await (await api('/api/share',{...shArg,days:+$('#shd').value})).json(),u=location.origin+'/s/'+r.token;
-  $('#shr').innerHTML=`<input id="shu" readonly value="${u}"><button id="shc">Copy</button>`;$('#shgo').hidden=true;$('#shd').hidden=true;
-  $('#shc').onclick=()=>{$('#shu').select();navigator.clipboard.writeText(u).then(()=>toast('Link copied'));load()}};
-$('#b-sh').onclick=()=>openShare({ids:[...sel]},`${sel.size} selected file(s)`);
-$('#shf').onclick=()=>openShare({folder:cur},`Folder "${cur}" and its subfolders`);
+$('#b-rm').onclick=async()=>{if(confirm(`Delete ${sel.size} item(s) from the channel?`)){const ids=[...sel];sel.clear();await api('/api/delete',{ids});toast('Deleted');load()}};
 function post(fields){const f=document.createElement('form');f.method='post';f.action='/api/zip';
   for(const k in fields){const i=document.createElement('input');i.type='hidden';i.name=k;i.value=fields[k];f.appendChild(i)}
   document.body.appendChild(f);f.submit();f.remove();toast('Preparing download…')}
@@ -259,9 +233,9 @@ let th='auto';try{th=localStorage.getItem('th')||'auto'}catch(e){}
 const ap=()=>{document.documentElement.dataset.theme=th;$('#theme').textContent={auto:'◐',light:'☀',dark:'☾'}[th]};
 $('#theme').onclick=()=>{th={auto:'light',light:'dark',dark:'auto'}[th];try{localStorage.setItem('th',th)}catch(e){}ap()};
 function go(p,m='folder',push=true){cur=p;mode=m;$('#q').value='';sel.clear();
-  if(push){const h=m!='folder'?'#'+m:'#/'+p.split('/').filter(Boolean).map(encodeURIComponent).join('/');if(location.hash!==h)history[push==='r'?'replaceState':'pushState'](null,'',h)}
+  if(push){const h=m=='all'?'#all':'#/'+p.split('/').filter(Boolean).map(encodeURIComponent).join('/');if(location.hash!==h)history[push==='r'?'replaceState':'pushState'](null,'',h)}
   render()}
-function fromHash(){const h=location.hash;if(['#all','#trash','#shares'].includes(h))return['',h.slice(1)];if(h.startsWith('#/'))return[h.slice(2).split('/').filter(Boolean).map(decodeURIComponent).join('/'),'folder'];return['','folder']}
+function fromHash(){const h=location.hash;if(h=='#all')return['','all'];if(h.startsWith('#/'))return[h.slice(2).split('/').filter(Boolean).map(decodeURIComponent).join('/'),'folder'];return['','folder']}
 window.onpopstate=()=>{const[p,m]=fromHash();go(p,m,false)};
 [cur,mode]=fromHash();ap();load();
 </script>
